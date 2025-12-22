@@ -1,0 +1,19 @@
+# Stockio - 주식 시세 조회 중계 서비스
+# Python 3.14
+
+# 웹 프레임워크
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# HTTP 클라이언트
+requests==2.32.3
+
+# 환경 변수 관리
+python-dotenv==1.0.1
+
+# 캐싱 (Phase 2)
+cachetools==5.5.0
+
+# 테스트 (Phase 1.2)
+pytest==8.3.4
+httpx==0.28.1  # FastAPI 테스트용

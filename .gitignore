@@ -1,5 +1,45 @@
+# Python 가상환경
 _venv/
+.venv/
+venv/
+ENV/
+env/
+
+# 환경 변수
 .env
+.env.local
+
+# 임시 작업 폴더
 _draft/
+.draft/
+_wip/
+
+# Python 바이트코드
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 배포
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# 테스트
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 키움 토큰
 .kiwoom_env
+
+# macOS
+.DS_Store
