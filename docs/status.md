@@ -1,12 +1,12 @@
 # 프로젝트 진행 상황
 
-**최종 업데이트**: 2025-12-23 00:38
+**최종 업데이트**: 2025-12-23 00:54
 
 ---
 
 ## 현재 단계
 
-**Phase 1.2: 단위 시험** - 완료 ✅
+**Phase 1.3: 로컬 E2E 테스트** - 완료 ✅
 
 ---
 
@@ -85,20 +85,47 @@
 - 수정된 `app/services/kiwoom.py`
 - 테스트 스크립트 (`test_token.py`, `test_price.py`, `test_price_debug.py`)
 
+### Phase 1.3 (2025-12-23)
+- [x] 로컬 서버 실행 및 기본 엔드포인트 테스트
+  - Health check, 루트 엔드포인트 정상 동작
+  - 서버 정상 시작 (http://localhost:8000)
+- [x] 다양한 종목 코드 테스트
+  - KOSPI: 삼성전자, 카카오, SK하이닉스, KODEX 200, LG에너지솔루션 (5건 성공)
+  - KOSDAQ: 에코프로비엠, 에코프로, 카카오게임즈 (3건 성공)
+- [x] 에러 케이스 테스트
+  - 잘못된 종목 코드: XML 에러 응답 정상 반환
+  - 파라미터 검증: FastAPI validation 정상 동작
+- [x] Google Spreadsheet 연동 가이드 작성
+  - ngrok 활용한 로컬 서버 공개 방법
+  - IMPORTXML 함수 사용법 및 XPath 표현식 가이드
+
+**산출물**:
+- `docs/phase1_3_test_results.md`: E2E 테스트 결과 문서
+- `docs/google_sheets_guide.md`: Google Spreadsheet 연동 가이드
+
+**테스트 결과**:
+- ✅ 8개 종목 시세 조회 성공 (KOSPI 5건, KOSDAQ 3건)
+- ✅ 에러 처리 정상 동작
+- ⚠️ 개선 필요: DeprecationWarning, 검증 에러 응답 형식, KOSDAQ market 필드
+
 ---
 
 ## 다음 단계
 
-**Phase 1.3: 로컬 E2E 테스트** (진행 예정)
+**Phase 1.4: 배포** (진행 예정)
 
 다음 작업 목록:
-1. Google Spreadsheet 연동 테스트
-   - IMPORTXML 함수로 로컬 서버 호출
-   - 실제 시세 데이터 표시 확인
-2. 다양한 종목 테스트
-3. 에러 케이스 테스트
-   - 잘못된 종목 코드
-   - 네트워크 에러 시뮬레이션
+1. 배포 준비
+   - requirements.txt 최종 확인
+   - .env 환경 변수 정리
+   - README 작성 (배포 방법 포함)
+2. Render 배포
+   - GitHub Repository 연동
+   - 환경 변수 설정
+   - 자동 배포 설정
+3. 배포 후 검증
+   - Health check 확인
+   - Google Spreadsheet에서 실제 배포 서버 호출 테스트
 
 상세 내용은 `docs/milestone.md` 참고.
 
