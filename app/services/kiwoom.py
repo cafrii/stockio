@@ -155,34 +155,40 @@ class KiwoomClient:
         # 토큰 획득
         token = self.get_token()
 
-        # API 호출
-        # 참고: 실제 키움 API 엔드포인트는 문서 확인 필요
-        # 여기서는 일반적인 패턴으로 구현
-        url = f"{self.api_host}/uapi/domestic-stock/v1/quotations/inquire-price"
+        # API 호출 - PoC 패턴 적용
+        # 현재가 조회 API ID는 문서 확인 필요 (예상: km10XXX 또는 kq10XXX)
+        # 일단 일봉 조회 API를 사용하여 가장 최근 종가를 현재가로 사용
+        url = f"{self.api_host}/api/dostk/chart"
 
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
-            "Authorization": f"Bearer {token}",
-            "appkey": self.appkey,
-            "appsecret": self.secret,
+            "authorization": f"Bearer {token}",
+            "cont-yn": "N",
+            "next-key": "",
+            "api-id": "ka10081",  # 일봉 차트 조회
         }
 
-        params = {
-            "fid_cond_mrkt_div_code": "J",  # 주식, 선물옵션, 채권 등 구분
-            "fid_input_iscd": code,  # 종목코드
+        # 오늘 날짜 기준 조회
+        base_dt = time.strftime("%Y%m%d")
+
+        data = {
+            "stk_cd": code,
+            "base_dt": base_dt,
+            "upd_stkpc_tp": "1",  # 수정주가구분
         }
 
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=10)
+            response = requests.post(url, headers=headers, json=data, timeout=10)
 
             # 인증 에러 체크
             if response.status_code == 401:
                 # 토큰 만료 가능성 - 재시도
                 token = self.get_token(force_new=True)
-                headers["Authorization"] = f"Bearer {token}"
-                response = requests.get(url, headers=headers, params=params, timeout=10)
+                headers["authorization"] = f"Bearer {token}"
+                response = requests.post(url, headers=headers, json=data, timeout=10)
 
-            response.raise_for_status()
+            if response.status_code != 200:
+                raise KiwoomAPIError(f"HTTP 상태 코드: {response.status_code}")
 
         except requests.RequestException as e:
             raise KiwoomAPIError(f"시세 조회 실패: {e}")
@@ -190,16 +196,26 @@ class KiwoomClient:
         result = response.json()
 
         # 응답 검증
-        return_code = result.get("rt_cd") or result.get("return_code")
-        if return_code != "0" and return_code != 0:
-            return_msg = result.get("msg1") or result.get("return_msg") or "알 수 없는 오류"
-            raise KiwoomAPIError(f"시세 조회 실패: {return_msg}")
+        return_code = result.get("return_code")
+        if return_code != 0:
+            return_msg = result.get("return_msg") or "알 수 없는 오류"
 
-        # 데이터 추출 (실제 응답 구조에 따라 조정 필요)
-        output = result.get("output") or {}
+            # 인증 에러 확인
+            if return_code == 3:
+                raise AuthenticationError(f"인증 실패: {return_msg}")
 
-        # 현재가 추출
-        current_price = output.get("stck_prpr") or output.get("price")
+            raise KiwoomAPIError(f"시세 조회 실패: [{return_code}] {return_msg}")
+
+        # 차트 데이터 추출
+        chart_data = result.get("stk_dt_pole_chart_qry")
+        if not isinstance(chart_data, list) or len(chart_data) == 0:
+            raise KiwoomAPIError("차트 데이터가 없습니다")
+
+        # 가장 최근 데이터 (첫 번째 요소)
+        latest = chart_data[0]
+
+        # 종가를 현재가로 사용 (cur_prc: current price)
+        current_price = latest.get("cur_prc")
 
         if not current_price:
             raise KiwoomAPIError("현재가 데이터를 찾을 수 없습니다")
@@ -212,6 +228,7 @@ class KiwoomClient:
             "price": int(current_price),
             "timestamp": timestamp,
             "market": market,
+            "date": latest.get("dt"),  # 조회 날짜
         }
 
 
