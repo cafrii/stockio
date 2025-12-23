@@ -62,14 +62,25 @@ async def get_stock_price(
     Raises:
         HTTPException: 에러 발생 시
     """
-    # 시장 구분 검증
+    # 시장 구분 검증 및 변환
     market = market.upper()
-    if market not in ["KOSPI", "KOSDAQ"]:
+
+    # 약어 변환 (J=KOSPI, Q=KOSDAQ)
+    market_mapping = {
+        "J": "KOSPI",
+        "Q": "KOSDAQ",
+        "KOSPI": "KOSPI",
+        "KOSDAQ": "KOSDAQ",
+    }
+
+    if market not in market_mapping:
         error_xml = build_error_xml(
-            message="유효하지 않은 시장 구분입니다. KOSPI 또는 KOSDAQ만 가능합니다.",
+            message="유효하지 않은 시장 구분입니다. KOSPI, KOSDAQ, J, Q만 가능합니다.",
             code=400,
         )
         return Response(content=error_xml, media_type="application/xml", status_code=400)
+
+    market = market_mapping[market]  # 약어를 정식 명칭으로 변환
 
     try:
         # 키움 클라이언트 획득

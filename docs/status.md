@@ -1,12 +1,12 @@
 # 프로젝트 진행 상황
 
-**최종 업데이트**: 2025-12-23 10:51
+**최종 업데이트**: 2025-12-23 11:10
 
 ---
 
 ## 현재 단계
 
-**Phase 1.3.1: 완전 비동기 구조 전환** - 완료 ✅
+**Phase 1.4: Render 배포 준비** - 완료 ✅
 
 ---
 
@@ -133,24 +133,89 @@
 - ✅ 블로킹 I/O 제거로 이벤트 루프 최적화
 - ✅ 향후 증권사 API 추가 시 동일 패턴 적용 가능
 
+### Phase 1.3.2 (2025-12-23)
+- [x] DeprecationWarning 제거
+  - `@app.on_event()` → `lifespan` 컨텍스트 매니저로 마이그레이션
+  - FastAPI 최신 권장 방식 적용
+- [x] Validation 에러 응답 형식 개선
+  - FastAPI validation 에러를 JSON → XML로 변경
+  - Google Sheets IMPORTXML 함수 호환성 향상
+  - 커스텀 exception handler 추가
+- [x] 시장 구분 처리 개선
+  - KOSDAQ 종목의 market 필드 정상 표시
+  - 시장 구분 약어 지원 추가 (J=KOSPI, Q=KOSDAQ)
+  - market_mapping 딕셔너리로 약어 자동 변환
+
+**산출물**:
+- 개선된 `main.py` (lifespan 패턴, validation handler)
+- 개선된 `app/api/routes.py` (시장 구분 약어 지원)
+
+**테스트 결과**:
+- ✅ DeprecationWarning 제거 확인
+- ✅ Validation 에러 XML 형식 반환 (code 파라미터 누락/오류)
+- ✅ KOSDAQ 종목 market 필드 "KOSDAQ"로 정상 표시
+- ✅ 시장 구분 약어 (J, Q) 정상 동작
+
+**Google Sheets 호환성**:
+- ✅ 모든 에러 응답이 XML 형식으로 통일
+- ✅ IMPORTXML 함수에서 일관된 파싱 가능
+- ✅ 시장 구분 약어로 더 간결한 수식 작성 가능
+
+### Phase 1.4 (2025-12-23)
+- [x] 배포 준비
+  - `runtime.txt` 생성 (Python 3.12.0)
+  - 배포 관련 파일 확인 (requirements.txt, .gitignore)
+  - GitHub repository 상태 확인
+- [x] Render 배포 가이드 작성
+  - 단계별 배포 절차 문서화
+  - 환경 변수 설정 가이드
+  - Free Tier 제한사항 및 주의사항
+  - 문제 해결 가이드
+- [x] 배포 후 검증 가이드 작성
+  - 10단계 검증 체크리스트
+  - Health check, API 테스트, 에러 처리 검증
+  - Google Sheets 연동 테스트
+  - 성능 테스트 (Cold/Warm start)
+
+**산출물**:
+- `runtime.txt`: Python 버전 명시
+- `docs/render_deployment_guide.md`: Render 배포 가이드
+- `docs/deployment_verification.md`: 배포 후 검증 가이드
+
+**배포 관련 결정사항**:
+- **토큰 관리**: `/tmp/.kiwoom_env` 사용 (ephemeral filesystem)
+  - 재시작 시 토큰 재발급 (자동 처리)
+  - 메모리 캐싱으로 운영 중 성능 유지
+- **API Key 관리**: Render 환경 변수 사용
+  - `KIWOOM_API_APPKEY`, `KIWOOM_API_SECRET`, `KIWOOM_API_HOST`
+  - 암호화되어 안전하게 저장
+- **플랫폼**: Render Free Tier
+  - 15분 idle 후 sleep (cold start 발생)
+  - 월 750시간 무료
+
+**다음 작업**:
+- 사용자가 직접 GitHub push 및 Render 배포 수행
+- `docs/render_deployment_guide.md` 참고하여 배포
+- `docs/deployment_verification.md` 참고하여 검증
+
 ---
 
 ## 다음 단계
 
-**Phase 1.4: 배포** (진행 예정)
-
-다음 작업 목록:
-1. 배포 준비
-   - requirements.txt 최종 확인
-   - .env 환경 변수 정리
-   - README 작성 (배포 방법 포함)
-2. Render 배포
-   - GitHub Repository 연동
-   - 환경 변수 설정
-   - 자동 배포 설정
+**사용자 배포 작업** (즉시 진행 가능)
+1. GitHub에 코드 push
+   - `docs/render_deployment_guide.md` Step 1 참조
+2. Render에서 서비스 생성 및 배포
+   - `docs/render_deployment_guide.md` Step 2-6 참조
 3. 배포 후 검증
-   - Health check 확인
-   - Google Spreadsheet에서 실제 배포 서버 호출 테스트
+   - `docs/deployment_verification.md` 체크리스트 수행
+
+**Phase 2: 기능 확장** (Phase 1 완료 후)
+- 캐싱 전략 개선 (Redis 또는 고급 메모리 캐싱)
+- 다중 종목 일괄 조회 API
+- 에러 로깅 및 모니터링 강화
+- API Rate Limiting
+- 추가 증권사 API 통합
 
 상세 내용은 `docs/milestone.md` 참고.
 
