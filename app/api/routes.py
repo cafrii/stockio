@@ -37,6 +37,48 @@ async def health_check():
     }
 
 
+@router.get("/debug/ip")
+async def get_server_ip():
+    """
+    서버의 아웃바운드 IP 주소 확인 (디버그용)
+
+    Returns:
+        JSON 응답 - 서버의 공인 IP 주소
+    """
+    import httpx
+
+    try:
+        async with httpx.AsyncClient() as client:
+            # 여러 IP 확인 서비스 시도
+            services = [
+                "https://api.ipify.org?format=json",
+                "https://ifconfig.me/ip",
+                "https://icanhazip.com",
+            ]
+
+            results = {}
+            for service in services:
+                try:
+                    response = await client.get(service, timeout=5.0)
+                    if response.status_code == 200:
+                        if "ipify" in service:
+                            results[service] = response.json()
+                        else:
+                            results[service] = {"ip": response.text.strip()}
+                except Exception as e:
+                    results[service] = {"error": str(e)}
+
+            return {
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "services": results,
+            }
+    except Exception as e:
+        return {
+            "error": str(e),
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
+
 @router.get("/api/price")
 async def get_stock_price(
     code: str = Query(..., description="종목 코드 (예: 005930)", min_length=6, max_length=6),
