@@ -2,7 +2,7 @@
 시세 조회 디버그 테스트 (비동기)
 """
 import sys
-sys.path.insert(0, '.')
+sys.path.insert(0, '..')
 
 import json
 import asyncio

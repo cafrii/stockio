@@ -2,7 +2,7 @@
 시세 조회 테스트 스크립트 (비동기)
 """
 import sys
-sys.path.insert(0, '.')
+sys.path.insert(0, '..')
 
 import asyncio
 from app.services.kiwoom import get_kiwoom_client
