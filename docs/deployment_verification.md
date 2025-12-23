@@ -10,9 +10,9 @@
 ### ✅ Step 1: 배포 완료 확인
 
 **Render 대시보드에서 확인**:
-- [ ] 빌드 성공 (Build Logs에서 "Build succeeded" 확인)
-- [ ] 서비스 실행 중 (Status: "Live" 표시)
-- [ ] URL 생성됨 (`https://stockio.onrender.com`)
+- [x] 빌드 성공 (Build Logs에서 "Build succeeded" 확인)
+- [x] 서비스 실행 중 (Status: "Live" 표시)
+- [x] URL 생성됨 (`https://stockio.onrender.com`)
 
 **배포 로그에서 확인**:
 ```
@@ -43,10 +43,10 @@ curl https://stockio.onrender.com/health
 ```
 
 **검증 항목**:
-- [ ] HTTP 200 응답
-- [ ] JSON 형식
-- [ ] status: "healthy"
-- [ ] timestamp가 현재 시간 (UTC)
+- [x] HTTP 200 응답
+- [x] JSON 형식
+- [x] status: "healthy"
+- [x] timestamp가 현재 시간 (UTC)
 
 ---
 
@@ -72,9 +72,9 @@ curl https://stockio.onrender.com/
 ```
 
 **검증 항목**:
-- [ ] HTTP 200 응답
-- [ ] 서비스 정보 표시
-- [ ] 엔드포인트 목록 확인
+- [x] HTTP 200 응답
+- [x] 서비스 정보 표시
+- [x] 엔드포인트 목록 확인
 
 ---
 
@@ -86,10 +86,10 @@ https://stockio.onrender.com/docs
 ```
 
 **검증 항목**:
-- [ ] Swagger UI 표시
-- [ ] `/health` 엔드포인트 보임
-- [ ] `/api/price` 엔드포인트 보임
-- [ ] "Try it out" 버튼으로 테스트 가능
+- [x] Swagger UI 표시
+- [x] `/health` 엔드포인트 보임
+- [x] `/api/price` 엔드포인트 보임
+- [x] "Try it out" 버튼으로 테스트 가능
 
 ---
 
@@ -112,11 +112,11 @@ curl "https://stockio.onrender.com/api/price?code=005930&market=KOSPI"
 ```
 
 **검증 항목**:
-- [ ] HTTP 200 응답
-- [ ] XML 형식
-- [ ] 종목 코드 일치
-- [ ] 가격 데이터 존재
-- [ ] market이 "KOSPI"
+- [x] HTTP 200 응답
+- [x] XML 형식
+- [x] 종목 코드 일치
+- [x] 가격 데이터 존재
+- [x] market이 "KOSPI"
 
 ---
 
@@ -139,9 +139,9 @@ curl "https://stockio.onrender.com/api/price?code=247540&market=Q"
 ```
 
 **검증 항목**:
-- [ ] HTTP 200 응답
-- [ ] market이 "KOSDAQ" (약어 "Q" 변환 성공)
-- [ ] KOSDAQ 종목 정상 조회
+- [x] HTTP 200 응답
+- [x] market이 "KOSDAQ" (약어 "Q" 변환 성공)
+- [x] KOSDAQ 종목 정상 조회
 
 ---
 
@@ -163,9 +163,9 @@ curl "https://stockio.onrender.com/api/price?code=&market=KOSPI"
 ```
 
 **검증 항목**:
-- [ ] HTTP 400 응답
-- [ ] XML 형식 (JSON 아님!)
-- [ ] 에러 메시지 명확
+- [x] HTTP 400 응답
+- [x] XML 형식 (JSON 아님!)
+- [x] 에러 메시지 명확
 
 ---
 
@@ -187,9 +187,9 @@ curl "https://stockio.onrender.com/api/price?code=999999&market=KOSPI"
 ```
 
 **검증 항목**:
-- [ ] HTTP 502 응답
-- [ ] XML 형식
-- [ ] 적절한 에러 메시지
+- [x] HTTP 502 응답
+- [x] XML 형식
+- [x] 적절한 에러 메시지
 
 ---
 
@@ -219,19 +219,19 @@ INFO:     시세 조회 성공: 005930 (KOSPI) = 112000
 ```
 =IMPORTXML("https://stockio.onrender.com/api/price?code=005930&market=KOSPI", "//price")
 ```
-- [ ] 가격 데이터 표시 (예: 112000)
+- [x] 가격 데이터 표시 (예: 112000)
 
 **2. 여러 필드 조회**:
 ```
 =IMPORTXML("https://stockio.onrender.com/api/price?code=005930&market=KOSPI", "//stock/*")
 ```
-- [ ] code, price, timestamp, market 모두 표시
+- [x] code, price, timestamp, market 모두 표시
 
 **3. KOSDAQ 종목 (약어)**:
 ```
 =IMPORTXML("https://stockio.onrender.com/api/price?code=247540&market=Q", "//price")
 ```
-- [ ] KOSDAQ 종목 정상 조회
+- [x] KOSDAQ 종목 정상 조회
 
 ---
 

@@ -6,7 +6,7 @@
 
 ## 현재 단계
 
-**Phase 1.4: Render 배포 준비** - 완료 ✅
+**Phase 1.4: Render 배포** - 완료 ✅
 
 ---
 
@@ -198,17 +198,19 @@
 - `docs/render_deployment_guide.md` 참고하여 배포
 - `docs/deployment_verification.md` 참고하여 검증
 
----
+## 배포
 
-## 다음 단계
-
-**사용자 배포 작업** (즉시 진행 가능)
+**사용자 배포 작업**
 1. GitHub에 코드 push
    - `docs/render_deployment_guide.md` Step 1 참조
 2. Render에서 서비스 생성 및 배포
    - `docs/render_deployment_guide.md` Step 2-6 참조
 3. 배포 후 검증
    - `docs/deployment_verification.md` 체크리스트 수행
+
+---
+
+## 다음 단계
 
 **Phase 2: 기능 확장** (Phase 1 완료 후)
 - 캐싱 전략 개선 (Redis 또는 고급 메모리 캐싱)
