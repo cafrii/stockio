@@ -12,7 +12,7 @@
 **Render 대시보드에서 확인**:
 - [ ] 빌드 성공 (Build Logs에서 "Build succeeded" 확인)
 - [ ] 서비스 실행 중 (Status: "Live" 표시)
-- [ ] URL 생성됨 (`https://stockio-xxxx.onrender.com`)
+- [ ] URL 생성됨 (`https://stockio.onrender.com`)
 
 **배포 로그에서 확인**:
 ```
@@ -30,7 +30,7 @@ INFO:     Uvicorn running on http://0.0.0.0:xxxx
 
 **명령어**:
 ```bash
-curl https://YOUR-APP-NAME.onrender.com/health
+curl https://stockio.onrender.com/health
 ```
 
 **예상 응답**:
@@ -54,7 +54,7 @@ curl https://YOUR-APP-NAME.onrender.com/health
 
 **명령어**:
 ```bash
-curl https://YOUR-APP-NAME.onrender.com/
+curl https://stockio.onrender.com/
 ```
 
 **예상 응답**:
@@ -82,7 +82,7 @@ curl https://YOUR-APP-NAME.onrender.com/
 
 **브라우저에서 접속**:
 ```
-https://YOUR-APP-NAME.onrender.com/docs
+https://stockio.onrender.com/docs
 ```
 
 **검증 항목**:
@@ -97,7 +97,7 @@ https://YOUR-APP-NAME.onrender.com/docs
 
 **명령어**:
 ```bash
-curl "https://YOUR-APP-NAME.onrender.com/api/price?code=005930&market=KOSPI"
+curl "https://stockio.onrender.com/api/price?code=005930&market=KOSPI"
 ```
 
 **예상 응답**:
@@ -124,7 +124,7 @@ curl "https://YOUR-APP-NAME.onrender.com/api/price?code=005930&market=KOSPI"
 
 **명령어**:
 ```bash
-curl "https://YOUR-APP-NAME.onrender.com/api/price?code=247540&market=Q"
+curl "https://stockio.onrender.com/api/price?code=247540&market=Q"
 ```
 
 **예상 응답**:
@@ -149,7 +149,7 @@ curl "https://YOUR-APP-NAME.onrender.com/api/price?code=247540&market=Q"
 
 **명령어** (빈 종목 코드):
 ```bash
-curl "https://YOUR-APP-NAME.onrender.com/api/price?code=&market=KOSPI"
+curl "https://stockio.onrender.com/api/price?code=&market=KOSPI"
 ```
 
 **예상 응답**:
@@ -173,7 +173,7 @@ curl "https://YOUR-APP-NAME.onrender.com/api/price?code=&market=KOSPI"
 
 **명령어**:
 ```bash
-curl "https://YOUR-APP-NAME.onrender.com/api/price?code=999999&market=KOSPI"
+curl "https://stockio.onrender.com/api/price?code=999999&market=KOSPI"
 ```
 
 **예상 응답**:
@@ -217,19 +217,19 @@ INFO:     시세 조회 성공: 005930 (KOSPI) = 112000
 
 **1. 기본 시세 조회**:
 ```
-=IMPORTXML("https://YOUR-APP-NAME.onrender.com/api/price?code=005930&market=KOSPI", "//price")
+=IMPORTXML("https://stockio.onrender.com/api/price?code=005930&market=KOSPI", "//price")
 ```
 - [ ] 가격 데이터 표시 (예: 112000)
 
 **2. 여러 필드 조회**:
 ```
-=IMPORTXML("https://YOUR-APP-NAME.onrender.com/api/price?code=005930&market=KOSPI", "//stock/*")
+=IMPORTXML("https://stockio.onrender.com/api/price?code=005930&market=KOSPI", "//stock/*")
 ```
 - [ ] code, price, timestamp, market 모두 표시
 
 **3. KOSDAQ 종목 (약어)**:
 ```
-=IMPORTXML("https://YOUR-APP-NAME.onrender.com/api/price?code=247540&market=Q", "//price")
+=IMPORTXML("https://stockio.onrender.com/api/price?code=247540&market=Q", "//price")
 ```
 - [ ] KOSDAQ 종목 정상 조회
 
@@ -241,7 +241,7 @@ INFO:     시세 조회 성공: 005930 (KOSPI) = 112000
 
 **서비스 Sleep 후 첫 요청**:
 ```bash
-time curl "https://YOUR-APP-NAME.onrender.com/health"
+time curl "https://stockio.onrender.com/health"
 ```
 
 **예상 시간**:
@@ -257,7 +257,7 @@ time curl "https://YOUR-APP-NAME.onrender.com/health"
 **여러 종목 연속 조회**:
 ```bash
 for code in 005930 035720 000660; do
-  curl "https://YOUR-APP-NAME.onrender.com/api/price?code=$code&market=KOSPI"
+  curl "https://stockio.onrender.com/api/price?code=$code&market=KOSPI"
   echo ""
 done
 ```

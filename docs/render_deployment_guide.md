@@ -114,12 +114,12 @@ git push origin main
 
 배포가 완료되면 다음과 같은 URL이 생성됩니다:
 ```
-https://stockio-xxxx.onrender.com
+https://stockio.onrender.com
 ```
 
 **Health Check**:
 ```bash
-curl https://stockio-xxxx.onrender.com/health
+curl https://stockio.onrender.com/health
 ```
 
 **예상 응답**:
@@ -139,29 +139,29 @@ curl https://stockio-xxxx.onrender.com/health
 
 ```bash
 # Health Check
-curl https://stockio-xxxx.onrender.com/health
+curl https://stockio.onrender.com/health
 
 # 루트 엔드포인트
-curl https://stockio-xxxx.onrender.com/
+curl https://stockio.onrender.com/
 
 # API 문서
-# 브라우저에서 https://stockio-xxxx.onrender.com/docs 접속
+# 브라우저에서 https://stockio.onrender.com/docs 접속
 ```
 
 ### 2. 시세 조회 테스트
 
 ```bash
 # KOSPI - 삼성전자
-curl "https://stockio-xxxx.onrender.com/api/price?code=005930&market=KOSPI"
+curl "https://stockio.onrender.com/api/price?code=005930&market=KOSPI"
 
 # KOSDAQ - 에코프로비엠 (약어 사용)
-curl "https://stockio-xxxx.onrender.com/api/price?code=247540&market=Q"
+curl "https://stockio.onrender.com/api/price?code=247540&market=Q"
 ```
 
 ### 3. Google Spreadsheet 연동
 
 ```
-=IMPORTXML("https://stockio-xxxx.onrender.com/api/price?code=005930&market=KOSPI", "//price")
+=IMPORTXML("https://stockio.onrender.com/api/price?code=005930&market=KOSPI", "//price")
 ```
 
 자세한 내용은 `docs/google_sheets_guide.md` 참조
