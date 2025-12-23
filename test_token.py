@@ -1,13 +1,16 @@
 """
-토큰 발급 테스트 스크립트
+토큰 발급 테스트 스크립트 (비동기)
 """
 import sys
 sys.path.insert(0, '.')
 
+import asyncio
 from app.services.kiwoom import get_kiwoom_client
 
-if __name__ == "__main__":
-    print("=== 키움 API 토큰 발급 테스트 ===\n")
+
+async def main():
+    """비동기 메인 함수"""
+    print("=== 키움 API 토큰 발급 테스트 (비동기) ===\n")
 
     try:
         client = get_kiwoom_client()
@@ -17,7 +20,7 @@ if __name__ == "__main__":
         print()
 
         print("토큰 발급 요청 중...")
-        token = client.get_token()
+        token = await client.get_token()
 
         print("✅ 토큰 발급 성공!")
         print(f"토큰: {token[:20]}...")
@@ -26,7 +29,7 @@ if __name__ == "__main__":
 
         # 캐시된 토큰 재사용 테스트
         print("캐시된 토큰 재사용 테스트...")
-        token2 = client.get_token()
+        token2 = await client.get_token()
 
         if token == token2:
             print("✅ 캐시된 토큰 재사용 성공!")
@@ -39,3 +42,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print("\n=== 테스트 완료 ===")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

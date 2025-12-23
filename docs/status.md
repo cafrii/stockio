@@ -1,12 +1,12 @@
 # 프로젝트 진행 상황
 
-**최종 업데이트**: 2025-12-23 00:54
+**최종 업데이트**: 2025-12-23 10:51
 
 ---
 
 ## 현재 단계
 
-**Phase 1.3: 로컬 E2E 테스트** - 완료 ✅
+**Phase 1.3.1: 완전 비동기 구조 전환** - 완료 ✅
 
 ---
 
@@ -107,6 +107,31 @@
 - ✅ 8개 종목 시세 조회 성공 (KOSPI 5건, KOSDAQ 3건)
 - ✅ 에러 처리 정상 동작
 - ⚠️ 개선 필요: DeprecationWarning, 검증 에러 응답 형식, KOSDAQ market 필드
+
+### Phase 1.3.1 (2025-12-23)
+- [x] HTTP 클라이언트 비동기 전환
+  - `requests` → `httpx.AsyncClient` 교체
+  - `app/services/kiwoom.py` 완전 비동기 변환
+  - `_request_new_token()`, `get_token()`, `get_stock_price()` 모두 async/await 적용
+- [x] API 엔드포인트 비동기 처리
+  - `app/api/routes.py`에 await 추가
+  - 이벤트 루프 블로킹 제거
+- [x] 테스트 코드 비동기 변환
+  - `test_token.py`, `test_price.py`, `test_price_debug.py` asyncio 적용
+  - `asyncio.run()` 패턴으로 변경
+- [x] 비동기 검증
+  - 단위 테스트: 토큰 발급, 시세 조회 성공
+  - E2E 테스트: 삼성전자, 카카오, 에코프로비엠 조회 성공
+
+**산출물**:
+- 비동기 변환된 `app/services/kiwoom.py` (httpx 기반)
+- 비동기 테스트 스크립트 3개
+- 완전 비동기 구조로 향후 확장성 확보
+
+**기술적 개선**:
+- ✅ ASGI 비동기 동시성 완벽 활용
+- ✅ 블로킹 I/O 제거로 이벤트 루프 최적화
+- ✅ 향후 증권사 API 추가 시 동일 패턴 적용 가능
 
 ---
 

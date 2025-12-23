@@ -1,13 +1,16 @@
 """
-시세 조회 테스트 스크립트
+시세 조회 테스트 스크립트 (비동기)
 """
 import sys
 sys.path.insert(0, '.')
 
+import asyncio
 from app.services.kiwoom import get_kiwoom_client
 
-if __name__ == "__main__":
-    print("=== 키움 API 시세 조회 테스트 ===\n")
+
+async def main():
+    """비동기 메인 함수"""
+    print("=== 키움 API 시세 조회 테스트 (비동기) ===\n")
 
     try:
         client = get_kiwoom_client()
@@ -15,7 +18,7 @@ if __name__ == "__main__":
 
         # 삼성전자 시세 조회
         print("삼성전자(005930) 시세 조회 중...")
-        price_data = client.get_stock_price("005930", "KOSPI")
+        price_data = await client.get_stock_price("005930", "KOSPI")
 
         print("✅ 시세 조회 성공!")
         print(f"  종목 코드: {price_data['code']}")
@@ -32,3 +35,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     print("\n=== 테스트 완료 ===")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

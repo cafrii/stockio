@@ -2,10 +2,11 @@
 키움증권 REST API 클라이언트
 
 PoC 코드(poc/src/get_token.py)를 참고하여 작성되었습니다.
+비동기 HTTP 클라이언트(httpx)를 사용하여 완전한 비동기 처리를 지원합니다.
 """
 import os
 import time
-import requests
+import httpx
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
@@ -67,8 +68,8 @@ class KiwoomClient:
         self._token = token
         self._token_expire_at = expire_at
 
-    def _request_new_token(self) -> str:
-        """새 토큰 발급 요청"""
+    async def _request_new_token(self) -> str:
+        """새 토큰 발급 요청 (비동기)"""
         url = f"{self.api_host}/oauth2/token"
         headers = {"Content-Type": "application/json;charset=UTF-8"}
         data = {
@@ -78,9 +79,10 @@ class KiwoomClient:
         }
 
         try:
-            response = requests.post(url, headers=headers, json=data, timeout=10)
-            response.raise_for_status()
-        except requests.RequestException as e:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, headers=headers, json=data, timeout=10.0)
+                response.raise_for_status()
+        except httpx.HTTPError as e:
             raise KiwoomAPIError(f"토큰 요청 실패: {e}")
 
         result = response.json()
@@ -103,9 +105,9 @@ class KiwoomClient:
 
         return token
 
-    def get_token(self, force_new: bool = False) -> str:
+    async def get_token(self, force_new: bool = False) -> str:
         """
-        토큰 획득 (캐시된 토큰 재사용 또는 새로 발급)
+        토큰 획득 (캐시된 토큰 재사용 또는 새로 발급) - 비동기
 
         Args:
             force_new: True일 경우 강제로 새 토큰 발급
@@ -130,11 +132,11 @@ class KiwoomClient:
                 return token
 
         # 새 토큰 발급
-        return self._request_new_token()
+        return await self._request_new_token()
 
-    def get_stock_price(self, code: str, market: str = "KOSPI") -> Dict[str, Any]:
+    async def get_stock_price(self, code: str, market: str = "KOSPI") -> Dict[str, Any]:
         """
-        주식 현재가 조회
+        주식 현재가 조회 (비동기)
 
         Args:
             code: 종목 코드 (예: "005930")
@@ -153,7 +155,7 @@ class KiwoomClient:
             AuthenticationError: 인증 실패
         """
         # 토큰 획득
-        token = self.get_token()
+        token = await self.get_token()
 
         # API 호출 - PoC 패턴 적용
         # 현재가 조회 API ID는 문서 확인 필요 (예상: km10XXX 또는 kq10XXX)
@@ -178,19 +180,20 @@ class KiwoomClient:
         }
 
         try:
-            response = requests.post(url, headers=headers, json=data, timeout=10)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, headers=headers, json=data, timeout=10.0)
 
-            # 인증 에러 체크
-            if response.status_code == 401:
-                # 토큰 만료 가능성 - 재시도
-                token = self.get_token(force_new=True)
-                headers["authorization"] = f"Bearer {token}"
-                response = requests.post(url, headers=headers, json=data, timeout=10)
+                # 인증 에러 체크
+                if response.status_code == 401:
+                    # 토큰 만료 가능성 - 재시도
+                    token = await self.get_token(force_new=True)
+                    headers["authorization"] = f"Bearer {token}"
+                    response = await client.post(url, headers=headers, json=data, timeout=10.0)
 
-            if response.status_code != 200:
-                raise KiwoomAPIError(f"HTTP 상태 코드: {response.status_code}")
+                if response.status_code != 200:
+                    raise KiwoomAPIError(f"HTTP 상태 코드: {response.status_code}")
 
-        except requests.RequestException as e:
+        except httpx.HTTPError as e:
             raise KiwoomAPIError(f"시세 조회 실패: {e}")
 
         result = response.json()

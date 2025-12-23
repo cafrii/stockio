@@ -75,8 +75,8 @@ async def get_stock_price(
         # 키움 클라이언트 획득
         client = get_kiwoom_client()
 
-        # 시세 조회
-        price_data = client.get_stock_price(code=code, market=market)
+        # 시세 조회 (비동기)
+        price_data = await client.get_stock_price(code=code, market=market)
 
         # XML 변환
         xml_content = build_stock_price_xml(price_data)
