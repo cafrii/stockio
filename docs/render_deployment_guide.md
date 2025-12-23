@@ -13,7 +13,7 @@
 - GitHub 계정으로 로그인 권장
 
 ### 2. GitHub Repository
-- Repository: `cafrii/test-api-kiwoom`
+- Repository: `cafrii/stockio`
 - 최신 코드가 push 되어 있어야 함
 
 ### 3. 키움 API 인증 정보
@@ -64,7 +64,7 @@ git push origin main
 
 3. **GitHub Repository 연결**
    - "Connect a repository" 선택
-   - `cafrii/test-api-kiwoom` 검색 후 "Connect" 클릭
+   - `cafrii/stockio` 검색 후 "Connect" 클릭
 
 ### Step 3: 서비스 설정
 
@@ -237,4 +237,4 @@ curl "https://stockio-xxxx.onrender.com/api/price?code=247540&market=Q"
 
 **배포 관련 문의**:
 - Render 문서: https://render.com/docs
-- 프로젝트 이슈: https://github.com/cafrii/test-api-kiwoom/issues
+- 프로젝트 이슈: https://github.com/cafrii/stockio/issues

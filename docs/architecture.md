@@ -17,7 +17,7 @@
 ## 디렉토리 구조
 
 ```
-test-api-kiwoom/
+stockio/
 ├── main.py                 # FastAPI 애플리케이션 진입점
 ├── requirements.txt        # Python 의존성
 ├── .env                    # 환경 변수 (로컬 개발용, Git 제외)

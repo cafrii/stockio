@@ -329,4 +329,4 @@ done
 ---
 
 **검증 관련 문의**:
-- GitHub Issues: https://github.com/cafrii/test-api-kiwoom/issues
+- GitHub Issues: https://github.com/cafrii/stockio/issues
