@@ -79,6 +79,52 @@ async def get_server_ip():
         }
 
 
+@router.get("/debug/token-status")
+async def get_token_status():
+    """
+    토큰 상태 확인 (디버그용)
+
+    Returns:
+        JSON 응답 - 토큰 상태 정보
+    """
+    try:
+        client = get_kiwoom_client()
+        status = client.get_token_status()
+        return status
+    except Exception as e:
+        return {
+            "error": str(e),
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
+
+@router.post("/debug/force-expire-token")
+async def force_expire_token():
+    """
+    토큰 강제 만료 (테스트용)
+
+    메모리 캐시와 파일의 만료 시간을 과거로 설정하여
+    토큰 재발급 로직을 테스트할 수 있습니다.
+
+    Returns:
+        JSON 응답 - 작업 결과
+    """
+    try:
+        client = get_kiwoom_client()
+        client.force_expire_token()
+        return {
+            "success": True,
+            "message": "토큰이 강제로 만료되었습니다.",
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
+
 @router.get("/api/price")
 async def get_stock_price(
     code: str = Query(..., description="종목 코드 (예: 005930)", min_length=6, max_length=6),

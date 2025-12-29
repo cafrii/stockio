@@ -1,12 +1,12 @@
 # 프로젝트 진행 상황
 
-**최종 업데이트**: 2025-12-23 11:10
+**최종 업데이트**: 2025-12-29 17:30
 
 ---
 
 ## 현재 단계
 
-**Phase 1.4: Render 배포** - 완료 ✅
+**Phase 1.4.2: 토큰 만료 문제 수정** - 완료 ✅
 
 ---
 
@@ -238,6 +238,36 @@ curl https://stockio.onrender.com/debug/ip
 
 등록 후 확인
 - curl "https://stockio.onrender.com/api/price?code=005930&market=KOSPI"
+
+### Phase 1.4.2 (2025-12-29)
+
+- [x] 토큰 만료 문제 디버깅 및 수정
+  - **문제**: 토큰 유효기간 경과 후 `return_code=3` 인증 실패 에러
+  - **원인**: HTTP 401 재시도는 있으나 `return_code=3` 재시도 로직 누락
+  - **해결**:
+    - 로깅 강화 (토큰 로드, 발급, API 호출 전 과정)
+    - 만료된 토큰 파일 자동 삭제 추가
+    - `return_code=3` 인증 실패 시 재시도 로직 추가
+    - 디버그 엔드포인트 추가:
+      - `/debug/token-status`: 토큰 상태 확인
+      - `/debug/force-expire-token`: 토큰 강제 만료 (테스트용)
+
+**산출물**:
+- `docs/token_debug_guide.md`: 토큰 디버깅 가이드
+- 수정된 `app/services/kiwoom.py`: 로깅 및 재시도 로직 강화
+- 수정된 `app/api/routes.py`: 디버그 엔드포인트 추가
+
+**테스트 결과**:
+- ✅ 정상 토큰으로 시세 조회
+- ✅ 만료된 토큰 자동 감지 및 재발급
+- ✅ HTTP 401 에러 재시도
+- ✅ return_code=3 에러 재시도
+- ✅ 로그 출력 완벽
+
+**다음 작업**:
+- 사용자가 코드 검토 후 GitHub push
+- Render 자동 배포
+- 배포 후 `/debug/token-status`로 상태 확인
 
 ---
 
