@@ -46,10 +46,6 @@ git commit -m "Phase 1.3.1 & 1.3.2 완료: 비동기 구조 전환 및 코드 �
 - 시장 구분 약어(J, Q) 지원 추가
 - Render 배포 준비 (runtime.txt 추가)
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
-
 # Push
 git push origin main
 ```

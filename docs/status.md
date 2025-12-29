@@ -208,6 +208,37 @@
 3. 배포 후 검증
    - `docs/deployment_verification.md` 체크리스트 수행
 
+
+### Phase 1.4.1 (2025-12-23)
+
+- [x] Render 배포 후 문제점 수정
+  - IP whitelist를 위한 관리용 endpoint 추가
+    - /debug/ip 엔드포인트 추가
+
+**확인 방법**
+```
+curl https://stockio.onrender.com/debug/ip
+# 예상 응답
+{
+  "timestamp": "2025-12-23T11:15:00",
+  "services": {
+    "https://api.ipify.org?format=json": {
+      "ip": "123.456.789.012"
+    },
+    "https://ifconfig.me/ip": {
+      "ip": "123.456.789.012"
+    },
+    "https://icanhazip.com": {
+      "ip": "123.456.789.012"
+    }
+  }
+}
+# 위 확인된 IP 주소를 키움증권 API 관리 페이지의 화이트리스트에 추가
+```  
+
+등록 후 확인
+- curl "https://stockio.onrender.com/api/price?code=005930&market=KOSPI"
+
 ---
 
 ## 다음 단계
