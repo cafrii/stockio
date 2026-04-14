@@ -169,9 +169,33 @@ class KiwoomClient:
         logger.info("새 토큰 발급 필요")
         return await self._request_new_token()
 
+    @staticmethod
+    def _parse_price(value: Optional[str]) -> Optional[int]:
+        """
+        키움 API 가격 문자열을 정수로 변환
+
+        키움 API는 가격 앞에 부호(+/-)를 붙여 반환함 (예: "+88800", "-54300")
+        부호를 제거하고 절대값을 반환
+
+        Args:
+            value: 가격 문자열 (예: "+88800", "-54300", "55500")
+
+        Returns:
+            정수 가격, 파싱 실패 시 None
+        """
+        if not value:
+            return None
+        try:
+            return abs(int(value))
+        except (ValueError, TypeError):
+            return None
+
     async def get_stock_price(self, code: str, market: str = "KOSPI") -> Dict[str, Any]:
         """
-        주식 현재가 조회 (비동기)
+        주식 현재가 및 52주 최고가 조회 (비동기)
+
+        ka10001 (주식기본정보요청) API를 사용.
+        현재가(cur_prc)와 52주 최고가(250hgst)를 단일 호출로 획득.
 
         Args:
             code: 종목 코드 (예: "005930")
@@ -181,8 +205,11 @@ class KiwoomClient:
             시세 데이터 딕셔너리
             {
                 "code": "005930",
-                "price": 71000,
-                "timestamp": "2025-12-22T14:30:00"
+                "price": 54300,
+                "high52w": 88800,
+                "high52w_date": "20240711",
+                "timestamp": "2025-12-22T14:30:00",
+                "market": "KOSPI"
             }
 
         Raises:
@@ -194,27 +221,17 @@ class KiwoomClient:
         # 토큰 획득
         token = await self.get_token()
 
-        # API 호출 - PoC 패턴 적용
-        # 현재가 조회 API ID는 문서 확인 필요 (예상: km10XXX 또는 kq10XXX)
-        # 일단 일봉 조회 API를 사용하여 가장 최근 종가를 현재가로 사용
-        url = f"{self.api_host}/api/dostk/chart"
+        url = f"{self.api_host}/api/dostk/stkinfo"
 
         headers = {
             "Content-Type": "application/json;charset=UTF-8",
             "authorization": f"Bearer {token}",
             "cont-yn": "N",
             "next-key": "",
-            "api-id": "ka10081",  # 일봉 차트 조회
+            "api-id": "ka10001",  # 주식기본정보요청
         }
 
-        # 오늘 날짜 기준 조회
-        base_dt = time.strftime("%Y%m%d")
-
-        data = {
-            "stk_cd": code,
-            "base_dt": base_dt,
-            "upd_stkpc_tp": "1",  # 수정주가구분
-        }
+        data = {"stk_cd": code}
 
         # 재시도 플래그
         retry_attempted = False
@@ -270,11 +287,9 @@ class KiwoomClient:
                             raise KiwoomAPIError(f"시세 조회 실패: [{return_code}] {return_msg}")
 
                     elif return_code == 3:
-                        # 이미 재시도했는데도 실패
                         logger.error(f"재시도 후에도 인증 실패: {return_msg}")
                         raise AuthenticationError(f"인증 실패: {return_msg}")
                     else:
-                        # 다른 에러 코드
                         logger.error(f"API 에러: [{return_code}] {return_msg}")
                         raise KiwoomAPIError(f"시세 조회 실패: [{return_code}] {return_msg}")
 
@@ -282,33 +297,27 @@ class KiwoomClient:
             logger.error(f"HTTP 에러: {e}")
             raise KiwoomAPIError(f"시세 조회 실패: {e}")
 
-        # 차트 데이터 추출
-        chart_data = result.get("stk_dt_pole_chart_qry")
-        if not isinstance(chart_data, list) or len(chart_data) == 0:
-            logger.error("차트 데이터 없음")
-            raise KiwoomAPIError("차트 데이터가 없습니다")
-
-        # 가장 최근 데이터 (첫 번째 요소)
-        latest = chart_data[0]
-
-        # 종가를 현재가로 사용 (cur_prc: current price)
-        current_price = latest.get("cur_prc")
-
-        if not current_price:
+        # 현재가 파싱 (부호 제거)
+        current_price = self._parse_price(result.get("cur_prc"))
+        if current_price is None:
             logger.error("현재가 데이터 없음")
             raise KiwoomAPIError("현재가 데이터를 찾을 수 없습니다")
 
-        # 타임스탬프 생성
+        # 52주 최고가 파싱 (250일 최고가 = 52주 최고가)
+        high52w = self._parse_price(result.get("250hgst"))
+        high52w_date = result.get("250hgst_pric_dt")  # 예: "20240711"
+
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
 
-        logger.info(f"시세 조회 성공: code={code}, price={current_price}")
+        logger.info(f"시세 조회 성공: code={code}, price={current_price}, high52w={high52w}")
 
         return {
             "code": code,
-            "price": int(current_price),
+            "price": current_price,
+            "high52w": high52w,
+            "high52w_date": high52w_date,
             "timestamp": timestamp,
             "market": market,
-            "date": latest.get("dt"),  # 조회 날짜
         }
 
     def get_token_status(self) -> Dict[str, Any]:

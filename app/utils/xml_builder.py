@@ -23,7 +23,9 @@ def build_stock_price_xml(data: Dict[str, Any]) -> str:
         data: 시세 데이터 딕셔너리
               {
                   "code": "005930",
-                  "price": 71000,
+                  "price": 54300,
+                  "high52w": 88800,
+                  "high52w_date": "20240711",
                   "timestamp": "2025-12-22T14:30:00",
                   "market": "KOSPI"
               }
@@ -33,19 +35,28 @@ def build_stock_price_xml(data: Dict[str, Any]) -> str:
         <?xml version="1.0" encoding="UTF-8"?>
         <stock>
           <code>005930</code>
-          <price>71000</price>
+          <price>54300</price>
+          <high52w>88800</high52w>
+          <high52w_date>20240711</high52w_date>
           <timestamp>2025-12-22T14:30:00</timestamp>
           <market>KOSPI</market>
         </stock>
     """
     root = ET.Element("stock")
 
-    # 데이터 추가
     code_elem = ET.SubElement(root, "code")
     code_elem.text = str(data.get("code", ""))
 
     price_elem = ET.SubElement(root, "price")
     price_elem.text = str(data.get("price", ""))
+
+    if data.get("high52w") is not None:
+        high52w_elem = ET.SubElement(root, "high52w")
+        high52w_elem.text = str(data.get("high52w"))
+
+    if data.get("high52w_date"):
+        high52w_date_elem = ET.SubElement(root, "high52w_date")
+        high52w_date_elem.text = str(data.get("high52w_date"))
 
     timestamp_elem = ET.SubElement(root, "timestamp")
     timestamp_elem.text = str(data.get("timestamp", ""))
