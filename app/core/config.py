@@ -17,7 +17,7 @@ class Config:
     # 키움 API 설정
     KIWOOM_API_APPKEY: str = os.getenv("KIWOOM_API_APPKEY", "")
     KIWOOM_API_SECRET: str = os.getenv("KIWOOM_API_SECRET", "")
-    KIWOOM_API_HOST: str = os.getenv("KIWOOM_API_HOST", "https://openapi.kiwoom.com")
+    KIWOOM_API_HOST: str = os.getenv("KIWOOM_API_HOST", "https://api.kiwoom.com")
     KIWOOM_TOKEN_ENV: str = os.getenv("KIWOOM_TOKEN_ENV", "/tmp/.kiwoom_env")
 
     # 애플리케이션 설정
