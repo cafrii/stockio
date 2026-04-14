@@ -270,10 +270,3 @@ PoC에서 검증된 기능을 `app/services/kiwoom.py`로 통합:
 
 ---
 
-## 다음 단계
-
-Phase 1.0 완료 후:
-- [ ] Phase 1.1: 핵심 기능 구현 (main.py, routes.py, kiwoom.py, xml_builder.py)
-- [ ] Phase 1.2: 단위 시험
-- [ ] Phase 1.3: 로컬 E2E 테스트
-- [ ] Phase 1.4: 배포

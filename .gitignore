@@ -14,6 +14,9 @@ _draft/
 .draft/
 _wip/
 
+# 독립 리포지토리
+.ai/
+
 # Python 바이트코드
 __pycache__/
 *.py[cod]

@@ -7,10 +7,10 @@
 ## Phase 1: MVP (현재가 조회 기능)
 
 ### Phase 1.0: PoC 검증 및 프로젝트 초기화
-- [x] 키움증권 REST API 연동 검증 (PoC 완료)
+- [✓] 키움증권 REST API 연동 검증 (PoC 완료)
   - 인증 및 토큰 관리
   - 차트 데이터 조회 (일봉/분봉/틱)
-- [ ] 프로젝트 구조 설계
+- [✓] 프로젝트 구조 설계
   - 디렉토리 구조 확정
   - requirements.txt 작성
   - 개발 환경 설정 (.env, .gitignore)
@@ -20,16 +20,16 @@
 ---
 
 ### Phase 1.1: 핵심 기능 구현
-- [ ] FastAPI 프로젝트 초기화
+- [✓] FastAPI 프로젝트 초기화
   - main.py 생성
   - Health check 엔드포인트 (`/health`)
-- [ ] 키움 API 클라이언트 모듈 (`app/services/kiwoom.py`)
+- [✓] 키움 API 클라이언트 모듈 (`app/services/kiwoom.py`)
   - 토큰 관리 (PoC 코드 재사용)
   - 시세 조회 함수 구현
-- [ ] `/api/price` 엔드포인트 구현 (`app/api/routes.py`)
+- [✓] `/api/price` 엔드포인트 구현 (`app/api/routes.py`)
   - Query 파라미터 검증 (종목코드, 시장구분)
   - 키움 API 호출
-- [ ] XML 변환 로직 (`app/utils/xml_builder.py`)
+- [✓] XML 변환 로직 (`app/utils/xml_builder.py`)
   - 시세 데이터 → XML 변환
   - 에러 응답 XML 생성
 
@@ -38,11 +38,11 @@
 ---
 
 ### Phase 1.2: 단위 시험
-- [ ] 키움 API 클라이언트 테스트
+- [✓] 키움 API 클라이언트 테스트
   - 토큰 발급 정상 동작
   - 시세 조회 정상 동작
   - API 에러 처리 (잘못된 종목 코드 등)
-- [ ] XML 변환 테스트
+- [✓] XML 변환 테스트
   - 정상 데이터 변환
   - 에러 응답 변환
 
@@ -52,11 +52,11 @@
 ---
 
 ### Phase 1.3: 로컬 E2E 테스트
-- [ ] 로컬 서버 실행 및 직접 API 호출 테스트
+- [✓] 로컬 서버 실행 및 직접 API 호출 테스트
   - curl/Postman으로 `/api/price` 테스트
   - 다양한 종목 코드 검증 (삼성전자, 카카오, ETF 등)
   - 에러 케이스 검증 (잘못된 코드, 빈 파라미터 등)
-- [ ] Google Spreadsheet 연동 테스트
+- [✓] Google Spreadsheet 연동 테스트
   - IMPORTXML 함수로 로컬 서버 호출
   - 실제 시세 데이터 표시 확인
 
@@ -66,15 +66,15 @@
 ---
 
 ### Phase 1.4: 배포
-- [ ] 배포 준비
+- [✓] 배포 준비
   - requirements.txt 최종 확인
   - .env 환경 변수 정리
   - README 작성 (배포 방법 포함)
-- [ ] Render 배포
+- [✓] Render 배포
   - GitHub Repository 연동
   - 환경 변수 설정 (KIWOOM_API_APPKEY, KIWOOM_API_SECRET)
   - 자동 배포 설정
-- [ ] 배포 후 검증
+- [✓] 배포 후 검증
   - Health check 확인
   - Google Spreadsheet에서 실제 배포 서버 호출 테스트
 
