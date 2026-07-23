@@ -306,18 +306,23 @@ class KiwoomClient(StockProvider):
             logger.error("현재가 데이터 없음")
             raise KiwoomAPIError("현재가 데이터를 찾을 수 없습니다")
 
-        # 52주 최고가 파싱 (250일 최고가 = 52주 최고가)
+        # 52주 최고/최저가 파싱 (250일 = 거래일 기준 52주)
         high52w = self._parse_price(result.get("250hgst"))
+        low52w = self._parse_price(result.get("250lwst"))
         high52w_date = result.get("250hgst_pric_dt")  # 예: "20240711"
 
         timestamp = time.strftime("%Y-%m-%dT%H:%M:%S")
 
-        logger.info(f"시세 조회 성공: code={code}, price={current_price}, high52w={high52w}")
+        logger.info(
+            f"시세 조회 성공: code={code}, price={current_price}, "
+            f"high52w={high52w}, low52w={low52w}"
+        )
 
         return {
             "code": code,
             "price": current_price,
             "high52w": high52w,
+            "low52w": low52w,
             "high52w_date": high52w_date,
             "timestamp": timestamp,
             "market": market,

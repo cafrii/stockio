@@ -47,6 +47,7 @@ class StockProvider(ABC):
                 "code": "005930",
                 "price": 54300,
                 "high52w": 88800 | None,      # 미제공 provider는 None
+                "low52w": 49900 | None,       # 52주 최저가
                 "high52w_date": "20240711" | None,
                 "timestamp": "2026-07-23T14:30:00",
                 "market": "KOSPI",

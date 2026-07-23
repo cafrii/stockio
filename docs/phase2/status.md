@@ -12,9 +12,10 @@
 **Phase 2.1(증권사 API 이중화) 구현·실측 완료 ✅ → 다음: Phase 2.2(금 시세)**
 
 ### 토스 API 조사 결과 (중요)
-- 토스 `/api/v1/prices`는 **현재가(lastPrice)만 제공, 52주 최고가 필드 없음**.
-  → toss provider는 `high52w`/`high52w_date`를 항상 `None`(빈 필드)으로 반환.
-  → 52주 최고가가 필요하면 kiwoom provider 사용해야 함.
+- 토스 `/api/v1/prices`는 **현재가(lastPrice)만 제공, 52주 최고/최저가 필드 없음**.
+  → **일봉 캔들 API(`/api/v1/candles`, interval=1d)를 페이지네이션 2회로 ~250거래일 조회 후 min/max 산출**(방법 A).
+  → 캔들은 `1m`/`1d`만 지원(주봉 없음), 1회 최대 200봉 → 250일은 200+50 두 번 호출.
+  → 실측 교차검증: 005930 기준 kiwoom·toss 모두 `high52w_date=20260619` 일치.
 - 토스 토큰: OAuth2 client_credentials(form-urlencoded), 응답 `expires_in`(초) → 절대 만료시각 변환 저장.
 - 토스도 키움처럼 **허용 IP 등록** 필요(미등록 시 403). 실측은 성공(현재 서버 IP 등록됨).
 
@@ -66,9 +67,10 @@
 ---
 
 ## 블로커 / 대기 항목
-- 토스 API 키·시크릿 (사용자 제공 예정: 폴더 구조 확정 후)
-- 금 시세 대상 URL·XPath (사용자 제공 예정)
-- 금 시세 대상의 lazy 로딩 여부 → headless 렌더링 도입 및 gamma Docker 반영 여부 결정
+- ~~토스 API 키·시크릿~~ → **검증 완료** (2026-07-23 실측 성공, 005930)
+- ~~금 시세 대상 URL·XPath~~ → **제공 완료** (naver metals 페이지 + XPath 2종)
+- 금 시세 대상의 lazy 로딩 여부 → headless 렌더링 도입 및 gamma Docker 반영 여부 결정 (Phase 2.2에서 확정)
+- 토스 52주 최고/최저가: 캔들(일봉) 조회로 직접 산출 방식 검토 중 (본 문서 하단 참고)
 
 ---
 

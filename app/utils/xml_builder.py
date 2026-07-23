@@ -37,6 +37,7 @@ def build_stock_price_xml(data: Dict[str, Any]) -> str:
           <code>005930</code>
           <price>54300</price>
           <high52w>88800</high52w>
+          <low52w>49900</low52w>
           <high52w_date>20240711</high52w_date>
           <timestamp>2025-12-22T14:30:00</timestamp>
           <market>KOSPI</market>
@@ -53,6 +54,10 @@ def build_stock_price_xml(data: Dict[str, Any]) -> str:
     if data.get("high52w") is not None:
         high52w_elem = ET.SubElement(root, "high52w")
         high52w_elem.text = str(data.get("high52w"))
+
+    if data.get("low52w") is not None:
+        low52w_elem = ET.SubElement(root, "low52w")
+        low52w_elem.text = str(data.get("low52w"))
 
     if data.get("high52w_date"):
         high52w_date_elem = ET.SubElement(root, "high52w_date")
