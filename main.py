@@ -30,6 +30,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"{config.APP_NAME} v{config.APP_VERSION} 시작")
     logger.info(f"디버그 모드: {config.DEBUG}")
     logger.info(f"키움 API 호스트: {config.KIWOOM_API_HOST}")
+    logger.info(f"기본 provider: {config.DEFAULT_PROVIDER}")
 
     # 환경 변수 검증
     try:
@@ -92,7 +93,7 @@ async def root():
         "status": "running",
         "endpoints": {
             "health": "/health",
-            "price": "/api/price?code={종목코드}&market={시장구분}",
+            "price": "/api/price?code={종목코드}&market={시장구분}&provider={kiwoom|toss}",
             "docs": "/docs",
         },
     }

@@ -65,6 +65,10 @@ def build_stock_price_xml(data: Dict[str, Any]) -> str:
         market_elem = ET.SubElement(root, "market")
         market_elem.text = str(data.get("market", ""))
 
+    if data.get("provider"):
+        provider_elem = ET.SubElement(root, "provider")
+        provider_elem.text = str(data.get("provider"))
+
     return prettify_xml(root)
 
 

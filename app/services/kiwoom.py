@@ -12,23 +12,26 @@ from typing import Optional, Dict, Any
 from dotenv import load_dotenv
 
 from app.core.config import config
+from app.services.base import StockProvider, StockProviderError, ProviderAuthError
 
 # 로거 설정
 logger = logging.getLogger(__name__)
 
 
-class KiwoomAPIError(Exception):
+class KiwoomAPIError(StockProviderError):
     """키움 API 에러"""
     pass
 
 
-class AuthenticationError(KiwoomAPIError):
+class AuthenticationError(ProviderAuthError):
     """인증 에러"""
     pass
 
 
-class KiwoomClient:
+class KiwoomClient(StockProvider):
     """키움증권 API 클라이언트"""
+
+    name = "kiwoom"
 
     def __init__(self):
         self.api_host = config.KIWOOM_API_HOST
@@ -318,6 +321,7 @@ class KiwoomClient:
             "high52w_date": high52w_date,
             "timestamp": timestamp,
             "market": market,
+            "provider": self.name,
         }
 
     def get_token_status(self) -> Dict[str, Any]:

@@ -1,6 +1,6 @@
 # Phase 2 진행 상황
 
-**최종 업데이트**: 2026-07-23
+**최종 업데이트**: 2026-07-23 (Phase 2.1 구현·실측 완료)
 
 > 상위 진행 상황은 `docs/status.md`, Phase 2 상세 계획은 `docs/phase2/milestone.md` 참고.
 > 갑작스러운 중단 후 심리스 재개를 위한 상태 문서. 단계(milestone) 완료 시 갱신한다.
@@ -9,7 +9,14 @@
 
 ## 현재 단계
 
-**Phase 2 착수 — 계획/문서 셋업 완료, 구현 대기** 🚧
+**Phase 2.1(증권사 API 이중화) 구현·실측 완료 ✅ → 다음: Phase 2.2(금 시세)**
+
+### 토스 API 조사 결과 (중요)
+- 토스 `/api/v1/prices`는 **현재가(lastPrice)만 제공, 52주 최고가 필드 없음**.
+  → toss provider는 `high52w`/`high52w_date`를 항상 `None`(빈 필드)으로 반환.
+  → 52주 최고가가 필요하면 kiwoom provider 사용해야 함.
+- 토스 토큰: OAuth2 client_credentials(form-urlencoded), 응답 `expires_in`(초) → 절대 만료시각 변환 저장.
+- 토스도 키움처럼 **허용 IP 등록** 필요(미등록 시 403). 실측은 성공(현재 서버 IP 등록됨).
 
 ---
 
@@ -37,11 +44,17 @@
 
 ## 진행 중 / 다음 작업
 
-### Phase 2.1: 증권사 API 이중화 (토스)
-- [ ] 2.1.1 `StockProvider` 공통 인터페이스 추상화
-- [ ] 2.1.2 토스 클라이언트 구현 (`app/services/toss.py`) — 토스 키/시크릿 제공 대기
-- [ ] 2.1.3 `/api/price` provider 파라미터 추가
-- [ ] 2.1.4 교차 조회·회귀 검증
+### Phase 2.1: 증권사 API 이중화 (토스) — 완료 ✅
+- [x] 2.1.1 `StockProvider` 공통 인터페이스 추상화 (`app/services/base.py`)
+- [x] 2.1.2 토스 클라이언트 구현 (`app/services/toss.py`) — 토큰+현재가, 실측 성공(005930)
+- [x] 2.1.3 `/api/price` provider 파라미터 추가 + 팩토리(`app/services/provider.py`)
+- [x] 2.1.4 검증: 토스 실측/라우트 E2E/잘못된 provider 400/싱글톤·예외계층 확인
+- 기본 provider는 `DEFAULT_PROVIDER` 환경변수로 변경 가능(미설정 시 kiwoom)
+
+**구현 파일**: `app/services/base.py`(신규), `app/services/toss.py`(신규),
+`app/services/provider.py`(신규), `app/services/kiwoom.py`(인터페이스 구현),
+`app/core/config.py`(토스·DEFAULT_PROVIDER), `app/api/routes.py`(provider 라우팅),
+`app/utils/xml_builder.py`(`<provider>` 태그), `main.py`(루트·기동로그)
 
 ### Phase 2.2: 금 시세 (스크래핑)
 - [ ] 2.2.1 스크래핑 설정 외부화 (`config/scrape_targets.yaml`)

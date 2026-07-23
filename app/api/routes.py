@@ -8,7 +8,9 @@ from fastapi.responses import Response
 import time
 import logging
 
-from app.services.kiwoom import get_kiwoom_client, KiwoomAPIError, AuthenticationError
+from app.services.kiwoom import get_kiwoom_client
+from app.services.base import StockProviderError, ProviderAuthError
+from app.services.provider import get_provider, available_providers, resolve_provider_name
 from app.utils.xml_builder import build_stock_price_xml, build_error_xml
 
 # 로거 설정
@@ -129,6 +131,7 @@ async def force_expire_token():
 async def get_stock_price(
     code: str = Query(..., description="종목 코드 (예: 005930)", min_length=6, max_length=6),
     market: str = Query("KOSPI", description="시장 구분 (KOSPI, KOSDAQ)"),
+    provider: str = Query(None, description="증권사 provider (kiwoom, toss). 미지정 시 서버 기본값"),
 ):
     """
     주식 현재가 조회 엔드포인트
@@ -136,6 +139,7 @@ async def get_stock_price(
     Args:
         code: 종목 코드 (6자리)
         market: 시장 구분 (기본값: KOSPI)
+        provider: 증권사 provider (kiwoom, toss). 미지정 시 서버 기본값(DEFAULT_PROVIDER)
 
     Returns:
         XML 응답
@@ -145,11 +149,21 @@ async def get_stock_price(
           <price>71000</price>
           <timestamp>2025-12-22T14:30:00</timestamp>
           <market>KOSPI</market>
+          <provider>kiwoom</provider>
         </stock>
 
     Raises:
         HTTPException: 에러 발생 시
     """
+    # provider 검증 (미지정 시 기본값 적용)
+    provider_name = resolve_provider_name(provider)
+    if provider_name not in available_providers():
+        error_xml = build_error_xml(
+            message=f"유효하지 않은 provider입니다. 사용 가능: {', '.join(available_providers())}",
+            code=400,
+        )
+        return Response(content=error_xml, media_type="application/xml", status_code=400)
+
     # 시장 구분 검증 및 변환
     market = market.upper()
 
@@ -171,8 +185,8 @@ async def get_stock_price(
     market = market_mapping[market]  # 약어를 정식 명칭으로 변환
 
     try:
-        # 키움 클라이언트 획득
-        client = get_kiwoom_client()
+        # provider 클라이언트 획득 (kiwoom | toss)
+        client = get_provider(provider_name)
 
         # 시세 조회 (비동기)
         price_data = await client.get_stock_price(code=code, market=market)
@@ -181,11 +195,11 @@ async def get_stock_price(
         xml_content = build_stock_price_xml(price_data)
 
         # 로그
-        logger.info(f"시세 조회 성공: {code} ({market}) = {price_data['price']}")
+        logger.info(f"시세 조회 성공: {code} ({market}) [{provider_name}] = {price_data['price']}")
 
         return Response(content=xml_content, media_type="application/xml")
 
-    except AuthenticationError as e:
+    except ProviderAuthError as e:
         logger.error(f"인증 실패: {e}")
         error_xml = build_error_xml(
             message="인증에 실패했습니다.",
@@ -194,7 +208,7 @@ async def get_stock_price(
         )
         return Response(content=error_xml, media_type="application/xml", status_code=401)
 
-    except KiwoomAPIError as e:
+    except StockProviderError as e:
         logger.error(f"API 에러: {e}")
         error_xml = build_error_xml(
             message="시세 조회에 실패했습니다.",
