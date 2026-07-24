@@ -23,12 +23,13 @@ def available_targets() -> List[str]:
     return get_scraper().config.targets(GOLD_GROUP)
 
 
-async def get_gold_price(target: str) -> Dict[str, Any]:
+async def get_gold_price(target: str, force_refresh: bool = False) -> Dict[str, Any]:
     """
     금 시세 1건 조회
 
     Args:
         target: 대상 키 (설정 기준. 예: "krx", "international")
+        force_refresh: True면 캐시를 무시하고 새로 조회
 
     Returns:
         스크래핑 결과 딕셔너리 (scraper.scrape() 참고)
@@ -36,9 +37,9 @@ async def get_gold_price(target: str) -> Dict[str, Any]:
     Raises:
         ScrapeError 계열
     """
-    return await get_scraper().scrape(GOLD_GROUP, target)
+    return await get_scraper().scrape(GOLD_GROUP, target, force_refresh=force_refresh)
 
 
-async def get_all_gold_prices() -> List[Dict[str, Any]]:
+async def get_all_gold_prices(force_refresh: bool = False) -> List[Dict[str, Any]]:
     """설정에 정의된 모든 금 시세 조회 (동일 URL은 캐시로 1회만 요청)"""
-    return await get_scraper().scrape_group(GOLD_GROUP)
+    return await get_scraper().scrape_group(GOLD_GROUP, force_refresh=force_refresh)

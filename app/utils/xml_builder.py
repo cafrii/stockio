@@ -147,6 +147,11 @@ def _append_scrape_fields(parent: ET.Element, data: Dict[str, Any]) -> None:
     timestamp_elem = ET.SubElement(parent, "timestamp")
     timestamp_elem.text = str(data.get("timestamp", ""))
 
+    # 어느 경로로 얻은 값인지 (static | render) — 운영/진단용
+    if data.get("method"):
+        method_elem = ET.SubElement(parent, "method")
+        method_elem.text = str(data.get("method"))
+
 
 def build_error_xml(
     message: str, code: Optional[int] = None, detail: Optional[str] = None

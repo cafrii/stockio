@@ -85,6 +85,33 @@
 
 **추가 의존성**: `lxml`, `PyYAML` (requirements.txt 반영) → **gamma 재배포 시 이미지 재빌드 필요**
 
+### Phase 2.2-b: lazy 로딩(headless 렌더링) 대응 — 완료 ✅
+
+정적 GET으로 불가능한 페이지를 위한 확장 경로. 기존 lxml 방식과 **병행** 지원.
+
+- [x] `app/services/renderer.py` 신규 (playwright, **선택적 의존성** — 미설치여도 정적은 정상 동작)
+- [x] 대상별 `render: never | auto | always` 설정 (기본 `auto`)
+  - `auto` = 정적 시도 → **실패한 대상만** 렌더링 재시도 (사용자 요청 동작)
+- [x] 응답에 `<method>static|render</method>` 추가 (어느 경로로 얻었는지 진단)
+- [x] 캐시 강제 무효화 파라미터 **`refresh=1`** (`/api/gold?target=krx&refresh=1`)
+- [x] 캐시 키를 (url, 렌더링여부)로 분리
+- [x] Dockerfile `--build-arg ENABLE_RENDER=true` 선택적 설치 (기본 false → 기존 경량 이미지 유지)
+
+**실측 검증 (2026-07-24)**
+
+| 대상 | 정적 | 렌더링 | 결과 |
+|------|------|--------|------|
+| 네이버 금(krx/international) | ✅ | 불필요 | `method=static` |
+| 네이버 BTC (CSR) | ❌ 값 없음 | ✅ | 94,902,000원 `method=render` |
+| investing.com XAU/USD | ❌ HTTP 403 | ✅ | 4,045.14 `method=render` |
+| auto 폴백 (BTC를 auto로) | ❌ → 폴백 | ✅ | `method=render` 자동 전환 확인 |
+
+**주의(중요)**: 브라우저 "Copy XPath"의 위치 기반 경로는 headless에서 DOM이 달라 자주 깨진다.
+→ investing.com은 `//*[@data-test="instrument-price-last"]` 속성 기반으로 대체했다.
+(사용자 제공 위치 기반 XPath는 렌더링 환경에서 미매칭)
+
+**알려진 제약**: 렌더러는 이벤트 루프에 바인딩되므로 루프 변경 시 자동 재기동하도록 처리했다.
+
 ---
 
 ## 블로커 / 대기 항목

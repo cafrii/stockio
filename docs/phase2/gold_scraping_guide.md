@@ -45,7 +45,84 @@ groups:
 | `label` | | 사람이 읽는 이름 |
 | `unit` | | 단위 표기 (`원/g`, `USD/OZS`) |
 | `currency` | | 통화 코드 |
+| `render` | | 조회 방식 `never`/`auto`/`always` (기본 `auto`) |
+| `wait_ms`·`wait_for` | | 렌더링 대기 (아래 참고) |
 | `timeout`·`user_agent`·`cache_ttl` | | `defaults` 재정의용 |
+
+---
+
+## 2-1. 조회 방식: 정적 vs headless 렌더링
+
+일부 페이지는 단순 HTTP GET으로 값을 얻을 수 없다. 두 경로를 모두 지원한다.
+
+| `render` | 동작 | 쓰는 경우 |
+|----------|------|-----------|
+| `never` | 정적 HTTP GET만 | 가장 가볍다. 정적으로 확실히 되는 대상 |
+| `auto` (기본) | 정적 시도 → **실패하면 그 대상만** 렌더링 재시도 | 평소 가볍게, 깨지면 자동 복구 |
+| `always` | 항상 headless 렌더링 | CSR·봇차단이 확실한 대상 (정적 시도 낭비 제거) |
+
+응답의 `<method>` 로 **어느 경로로 얻었는지** 확인할 수 있다 (`static` / `render`).
+
+```xml
+<quote>
+  <target>btc</target>
+  <price>94902000</price>
+  <method>render</method>   <!-- 렌더링 경로로 획득 -->
+</quote>
+```
+
+### 렌더링이 필요한 대표 증상
+
+| 증상 | 원인 | 조치 |
+|------|------|------|
+| 시트에 "가져온 콘텐츠가 비어 있습니다" | 클라이언트 렌더링(CSR) | `render: always` |
+| `HTTP 403` | 봇 차단 | `render: always` (실제 크롬 UA로 접속) |
+| 정적은 되다가 갑자기 실패 | 페이지 방식 변경 | `auto`면 자동 폴백됨 |
+
+### 렌더링 대기 옵션
+
+```yaml
+render: always
+wait_for: '[data-test="instrument-price-last"]'   # 이 요소가 나타날 때까지 대기(권장)
+wait_ms: 2500                                     # 또는 고정 대기(ms)
+```
+
+`wait_for` 가 `wait_ms` 보다 우선한다. 값이 늦게 채워지는 페이지는 `wait_for` 를 쓰는 편이 안정적이다.
+
+### ⚠️ 렌더링 대상의 XPath 주의
+
+**브라우저에서 "Copy XPath" 한 위치 기반 경로(`div[2]/div[1]/...`)는 headless 환경에서 자주 깨진다.**
+광고·쿠키 배너 등이 달라 DOM 인덱스가 밀리기 때문이다.
+
+→ 가능하면 **속성 기반 selector**를 쓴다.
+
+```yaml
+# 나쁨 (headless에서 깨짐)
+xpath: '//*[@id="__next"]/div[2]/div[1]/div[2]/div[1]/div[1]/div[3]/div[1]/div[1]/div[1]'
+# 좋음 (구조가 바뀌어도 견딤)
+xpath: '//*[@data-test="instrument-price-last"]'
+```
+
+찾는 방법: 개발자도구에서 값 요소를 선택한 뒤 `data-test`, `id`, 고유한 `class` 같은
+속성이 있는지 보고 `//*[@속성="값"]` 형태로 작성한다.
+
+### 설치 (렌더링을 쓰려면)
+
+playwright는 **선택적 의존성**이다. 설치하지 않아도 정적 스크래핑은 정상 동작한다.
+
+```bash
+pip install playwright
+playwright install chromium
+```
+
+Docker(gamma 배포)에서 켜려면:
+
+```bash
+docker build --build-arg ENABLE_RENDER=true -t stockio .
+```
+
+> 브라우저와 시스템 라이브러리 때문에 이미지가 수백 MB 커진다.
+> 렌더링이 필요한 대상을 쓰지 않는다면 켜지 않아도 된다.
 
 ---
 
@@ -119,8 +196,17 @@ curl "https://fiji.lowasis.com:8100/api/gold?target=krx"
 </gold>
 ```
 
-> 캐시(`cache_ttl`, 기본 60초) 때문에 수정 직후 이전 값이 보일 수 있다.
-> 즉시 확인하려면 `cache_ttl` 만큼 기다리거나 값을 일시적으로 `0` 으로 둔다.
+### 캐시 강제 무효화 — `refresh=1`
+
+캐시(`cache_ttl`, 기본 60초) 때문에 수정 직후 이전 값이 보일 수 있다.
+개발·검증 중에는 `refresh=1` 을 붙이면 **캐시를 무시하고 새로 조회**한다.
+
+```bash
+curl "http://localhost:8000/api/gold?target=krx&refresh=1"
+curl "http://localhost:8000/api/scrape?group=crypto&target=btc&refresh=1"
+```
+
+> 구글시트 수식에는 넣지 말 것 — 매 갱신마다 실제 페이지를 새로 긁는다.
 
 ---
 
@@ -167,12 +253,13 @@ curl "http://localhost:8000/api/scrape?group=crypto"          # 그룹 전체
 | 파일 | 역할 |
 |------|------|
 | `config/scrape_targets.yaml` | **대상 정의(여기만 고치면 됨)** |
-| `app/services/scraper.py` | 범용 엔진 (설정 로드 → 요청 → XPath 추출 → 숫자 정규화) |
+| `app/services/scraper.py` | 범용 엔진 (설정 로드 → 요청 → XPath 추출 → 숫자 정규화, 정적/렌더링 분기) |
+| `app/services/renderer.py` | headless 렌더링 (playwright, 선택적 의존성) |
 | `app/services/gold.py` | 금 시세 도메인 계층 (얇음) |
 | `app/api/routes.py` | `/api/gold`, `/api/scrape` |
 
-- 네이버 metals 페이지는 **서버 사이드 렌더링(SSR)** 되어 있어
-  단순 HTTP GET + XPath로 추출된다. **headless 브라우저 불필요**
-  (gamma Docker 이미지에 브라우저 의존성을 넣지 않아도 된다).
-- 만약 향후 대상이 진짜 lazy 로딩이라면, 그때 해당 대상만
-  headless 렌더링 경로를 추가하는 방식으로 확장한다.
+- 네이버 metals(금 시세) 페이지는 **SSR** 되어 있어 정적 GET으로 추출된다.
+- 반면 네이버 **비트코인** 페이지는 CSR, **investing.com** 은 봇차단(403)이라
+  렌더링 경로가 필요하다. 이 둘은 `render: always` 로 설정되어 있다.
+- 기본값이 `auto` 이므로, 정적으로 되던 대상이 나중에 CSR로 바뀌어도
+  **자동으로 렌더링 폴백**되어 값이 계속 나온다.

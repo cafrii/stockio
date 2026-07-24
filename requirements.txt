@@ -15,6 +15,13 @@ python-dotenv==1.0.1
 lxml==6.1.1          # XPath 추출
 PyYAML==6.0.3        # 스크래핑 대상 설정(config/scrape_targets.yaml) 로드
 
+# lazy 로딩(CSR)·봇차단 페이지 대응용 headless 렌더링 — **선택적 의존성**
+# 설치하지 않아도 정적 스크래핑은 정상 동작하며,
+# render 경로가 필요한 대상 조회 시에만 안내 에러가 발생한다.
+# 사용하려면 아래 주석을 해제하고 브라우저도 설치:
+#   pip install playwright && playwright install chromium
+# playwright==1.57.0
+
 # 캐싱 (Phase 2)
 cachetools==5.5.0
 

@@ -43,6 +43,14 @@ async def lifespan(app: FastAPI):
     yield  # 애플리케이션 실행
 
     # Shutdown
+    # headless 브라우저가 기동되어 있으면 정리 (미사용 시 no-op)
+    try:
+        from app.services.renderer import get_renderer
+
+        await get_renderer().close()
+    except Exception as e:
+        logger.warning(f"렌더러 종료 중 오류: {e}")
+
     logger.info(f"{config.APP_NAME} 종료")
 
 

@@ -167,6 +167,10 @@ async def get_gold_price(
         None,
         description="금 시세 대상 (krx, international). 미지정 시 전체 반환",
     ),
+    refresh: bool = Query(
+        False,
+        description="true면 캐시를 무시하고 새로 조회 (개발/검증용). 예: &refresh=1",
+    ),
 ):
     """
     금 시세 조회 엔드포인트 (스크래핑 기반)
@@ -176,6 +180,7 @@ async def get_gold_price(
 
     Args:
         target: 대상 키. 미지정 시 정의된 모든 대상을 반환
+        refresh: true면 캐시 무시하고 새로 조회
 
     Returns:
         XML 응답
@@ -187,17 +192,20 @@ async def get_gold_price(
           <unit>원/g</unit>
           <currency>KRW</currency>
           <timestamp>2026-07-24T01:00:00</timestamp>
+          <method>static</method>
         </gold>
     """
     try:
         # target 미지정 → 전체 조회 (동일 URL은 캐시로 1회만 요청)
         if not target:
-            items = await gold_service.get_all_gold_prices()
+            items = await gold_service.get_all_gold_prices(force_refresh=refresh)
             xml_content = build_scrape_list_xml(items, root_tag="golds", item_tag="gold")
             logger.info(f"금 시세 전체 조회 성공: {len(items)}건")
             return Response(content=xml_content, media_type="application/xml")
 
-        data = await gold_service.get_gold_price(target.strip().lower())
+        data = await gold_service.get_gold_price(
+            target.strip().lower(), force_refresh=refresh
+        )
         xml_content = build_scrape_xml(data, root_tag="gold")
         logger.info(f"금 시세 조회 성공: {data['target']} = {data['value']}")
         return Response(content=xml_content, media_type="application/xml")
@@ -218,6 +226,10 @@ async def get_gold_price(
 async def scrape_target(
     group: str = Query(..., description="자산 그룹 (예: gold, crypto)"),
     target: str = Query(None, description="대상 키. 미지정 시 그룹 전체 반환"),
+    refresh: bool = Query(
+        False,
+        description="true면 캐시를 무시하고 새로 조회 (개발/검증용). 예: &refresh=1",
+    ),
 ):
     """
     범용 스크래핑 엔드포인트
@@ -237,14 +249,16 @@ async def scrape_target(
         group_key = group.strip().lower()
 
         if not target:
-            items = await scraper.scrape_group(group_key)
+            items = await scraper.scrape_group(group_key, force_refresh=refresh)
             if not items:
                 raise ScrapeConfigError(f"'{group_key}' 그룹에 정의된 대상이 없습니다.")
             xml_content = build_scrape_list_xml(items, root_tag="quotes", item_tag="quote")
             logger.info(f"스크래핑 그룹 조회 성공: {group_key} {len(items)}건")
             return Response(content=xml_content, media_type="application/xml")
 
-        data = await scraper.scrape(group_key, target.strip().lower())
+        data = await scraper.scrape(
+            group_key, target.strip().lower(), force_refresh=refresh
+        )
         xml_content = build_scrape_xml(data, root_tag="quote")
         logger.info(f"스크래핑 조회 성공: {group_key}.{data['target']} = {data['value']}")
         return Response(content=xml_content, media_type="application/xml")

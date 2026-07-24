@@ -12,6 +12,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# headless 렌더링(lazy 로딩·봇차단 페이지 대응) 선택적 설치
+#   기본값 false → 기존과 동일한 가벼운 이미지 유지
+#   활성화:  docker build --build-arg ENABLE_RENDER=true ...
+#   (브라우저 + 시스템 의존성 때문에 이미지가 수백 MB 커진다)
+ARG ENABLE_RENDER=false
+# 비루트(appuser)로 실행하므로 브라우저를 공용 경로에 설치하고 읽기 권한을 준다
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN if [ "$ENABLE_RENDER" = "true" ]; then \
+        pip install --no-cache-dir playwright==1.57.0 && \
+        playwright install --with-deps chromium && \
+        chmod -R a+rX /ms-playwright; \
+    fi
+
 # 애플리케이션 코드 복사
 COPY . .
 
