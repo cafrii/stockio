@@ -1,6 +1,6 @@
 # Phase 2 진행 상황
 
-**최종 업데이트**: 2026-07-23 (Phase 2.1 구현·실측 완료)
+**최종 업데이트**: 2026-07-24 (Phase 2.1 / 2.2 모두 구현·실측 완료)
 
 > 상위 진행 상황은 `docs/status.md`, Phase 2 상세 계획은 `docs/phase2/milestone.md` 참고.
 > 갑작스러운 중단 후 심리스 재개를 위한 상태 문서. 단계(milestone) 완료 시 갱신한다.
@@ -9,7 +9,7 @@
 
 ## 현재 단계
 
-**Phase 2.1(증권사 API 이중화) 구현·실측 완료 ✅ → 다음: Phase 2.2(금 시세)**
+**Phase 2 전체(2.1 API 이중화 + 2.2 금 시세) 구현·실측 완료 ✅ → 다음: gamma 서버 재배포**
 
 ### 토스 API 조사 결과 (중요)
 - 토스 `/api/v1/prices`는 **현재가(lastPrice)만 제공, 52주 최고/최저가 필드 없음**.
@@ -42,9 +42,6 @@
 - [x] `docs/phase2/status.md` 작성 (본 문서)
 
 ---
-
-## 진행 중 / 다음 작업
-
 ### Phase 2.1: 증권사 API 이중화 (토스) — 완료 ✅
 - [x] 2.1.1 `StockProvider` 공통 인터페이스 추상화 (`app/services/base.py`)
 - [x] 2.1.2 토스 클라이언트 구현 (`app/services/toss.py`) — 토큰+현재가, 실측 성공(005930)
@@ -57,25 +54,51 @@
 `app/core/config.py`(토스·DEFAULT_PROVIDER), `app/api/routes.py`(provider 라우팅),
 `app/utils/xml_builder.py`(`<provider>` 태그), `main.py`(루트·기동로그)
 
-### Phase 2.2: 금 시세 (스크래핑)
-- [ ] 2.2.1 스크래핑 설정 외부화 (`config/scrape_targets.yaml`)
-- [ ] 2.2.2 스크래핑 서비스 구현 — **대상 URL·XPath 제공 대기**
-- [ ] 2.2.3 `/api/gold` 엔드포인트
-- [ ] 2.2.4 변경 대응 가이드 문서화
-- [ ] 2.2.5 검증
+### toss 일봉 차트로 52주 최고/최저가 계산 - 완료
+- **`app/services/kiwoom.py`**: `ka10001` 응답의 `250lwst`(52주 최저가)를 추가 파싱 →
+  반환 dict에 `low52w` 추가. **추가 API 호출 없음**(기존 단일 호출 응답에 포함).
+- **`app/services/toss.py`**: 일봉 캔들 산출 로직 신규.
+- **`app/services/base.py`**: 공통 반환 스키마 문서에 `low52w` 추가.
+- **`app/utils/xml_builder.py`**: `<high52w>` 다음에 `<low52w>` 요소 출력 추가(값이 있을 때만).
+
+
+## 진행 중 / 다음 작업
+
+### Phase 2.2: 금 시세 (스크래핑) — 완료 ✅
+- [x] 2.2.1 스크래핑 설정 외부화 (`config/scrape_targets.yaml`, `defaults` + `groups.<그룹>.<대상>`)
+- [x] 2.2.2 범용 스크래핑 서비스 구현 (`app/services/scraper.py`) + 금 도메인 계층 (`app/services/gold.py`)
+- [x] 2.2.3 `/api/gold` + 범용 `/api/scrape` 엔드포인트
+- [x] 2.2.4 변경 대응 가이드 (`docs/phase2/gold_scraping_guide.md`)
+- [x] 2.2.5 검증: 정상 추출·전체 조회·잘못된 대상 400·XPath 깨짐 502·캐시·회귀
+
+**핵심 발견**: 네이버 metals 페이지는 **SSR 되어 있어 단순 HTTP GET + XPath로 추출된다.**
+→ **headless 브라우저(playwright) 불필요**, gamma Docker에 브라우저 의존성 추가 불필요.
+(구글시트 IMPORTXML이 실패한 것은 lazy 로딩이 아닌 다른 원인)
+
+**실측**: 국제 금 4,051.6 USD/OZS / KRX 금 190,910 원/g
+
+**설계 특징**
+- 자산 무관 **범용 엔진** + 얇은 도메인 계층 → 가상자산 등은 YAML만 추가하면 코드 수정 없이 동작
+- 설정 파일 mtime 감지 → **서버 재시작 없이 즉시 반영**
+- URL 단위 TTL 캐시(기본 60초) → 두 대상이 같은 페이지를 공유하므로 실제 요청은 1회
+- 실패 유형별 구분: 설정 오류 400 / 페이지 조회 실패 502 / XPath 미매칭 502(구조 변경 안내)
+
+**추가 의존성**: `lxml`, `PyYAML` (requirements.txt 반영) → **gamma 재배포 시 이미지 재빌드 필요**
 
 ---
 
 ## 블로커 / 대기 항목
 - ~~토스 API 키·시크릿~~ → **검증 완료** (2026-07-23 실측 성공, 005930)
 - ~~금 시세 대상 URL·XPath~~ → **제공 완료** (naver metals 페이지 + XPath 2종)
-- 금 시세 대상의 lazy 로딩 여부 → headless 렌더링 도입 및 gamma Docker 반영 여부 결정 (Phase 2.2에서 확정)
-- 토스 52주 최고/최저가: 캔들(일봉) 조회로 직접 산출 방식 검토 중 (본 문서 하단 참고)
+- ~~금 시세 lazy 로딩/headless 여부~~ → **확정: SSR이라 headless 불필요**(단순 HTTP GET으로 추출)
+- ~~토스 52주 최고/최저가~~ → **완료**(일봉 캔들 250일 산출, kiwoom과 교차검증 일치)
+- gamma 재배포 시: 토스 4개 환경변수 + 서버 IP 토스 허용목록 등록 + `lxml`/`PyYAML` 포함 이미지 재빌드
 
 ---
 
 ## 참고 문서
 - `docs/phase2/milestone.md`: Phase 2 상세 마일스톤
+- `docs/phase2/gold_scraping_guide.md`: **스크래핑 대상 변경 대응 가이드**(페이지 구조 변경 시)
 - `docs/milestone.md`: 전체 마일스톤
 - `docs/architecture.md`: 아키텍처
 - `.ai/docs/gamma_docker_guide.md`: gamma 서버 배포 가이드

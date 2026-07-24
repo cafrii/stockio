@@ -1,0 +1,59 @@
+# =============================================================================
+# 스크래핑 대상 정의 (Stockio)
+# =============================================================================
+# 증권사 API로 얻을 수 없는 시세(금, 향후 가상자산 등)를 페이지에서 추출한다.
+#
+# ★ 이 파일만 수정하면 코드 변경 없이 대상/URL/XPath를 갱신할 수 있다.
+#   페이지 구조가 바뀌면 해당 target의 url·xpath만 고치면 된다.
+#   상세 절차와 진단 방법: docs/phase2/gold_scraping_guide.md
+#
+# 구조:
+#   defaults        : 모든 대상에 공통 적용되는 값 (target에서 개별 재정의 가능)
+#   groups.<그룹>.<대상> : 그룹(자산 종류)별 대상 정의
+#     url      (필수) 조회할 페이지 주소
+#     xpath    (필수) 값을 추출할 XPath (브라우저 개발자도구의 "Copy XPath" 결과 사용 가능)
+#     label    (선택) 사람이 읽을 이름
+#     unit     (선택) 단위 표기
+#     currency (선택) 통화 코드
+#     timeout / user_agent / cache_ttl (선택) defaults 재정의
+# =============================================================================
+
+defaults:
+  # HTTP 요청 제한 시간(초)
+  timeout: 10
+  # 네이버 등 일부 사이트는 UA가 없으면 응답이 달라질 수 있어 명시한다.
+  user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+  # 같은 URL 재요청을 줄이기 위한 HTML 캐시 유지 시간(초).
+  # 스프레드시트의 여러 셀이 동시에 호출해도 페이지는 한 번만 가져온다.
+  cache_ttl: 60
+
+groups:
+  # ---------------------------------------------------------------------------
+  # 금 시세
+  # ---------------------------------------------------------------------------
+  gold:
+    international:
+      label: "국제 금 시세 (GC 뉴욕상품거래소)"
+      url: "https://m.stock.naver.com/marketindex/home/metals"
+      xpath: '//*[@id="content"]/div[2]/ul/li[1]/div[1]/div[1]/b'
+      unit: "USD/OZS"
+      currency: "USD"
+
+    krx:
+      label: "국내 금 시세 (KRX 금 현물)"
+      url: "https://m.stock.naver.com/marketindex/home/metals"
+      xpath: '//*[@id="content"]/div[2]/ul/li[2]/div[1]/div[1]/b'
+      unit: "원/g"
+      currency: "KRW"
+
+  # ---------------------------------------------------------------------------
+  # 가상자산 (예시 — 필요 시 주석 해제 후 url/xpath 채우면 즉시 사용 가능)
+  # 그룹을 추가하면 /api/scrape?group=crypto&target=btc 로 바로 조회된다.
+  # ---------------------------------------------------------------------------
+  # crypto:
+  #   btc:
+  #     label: "비트코인"
+  #     url: ""
+  #     xpath: ''
+  #     unit: "원"
+  #     currency: "KRW"

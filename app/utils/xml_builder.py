@@ -77,6 +77,77 @@ def build_stock_price_xml(data: Dict[str, Any]) -> str:
     return prettify_xml(root)
 
 
+def build_scrape_xml(data: Dict[str, Any], root_tag: str = "quote") -> str:
+    """
+    스크래핑 결과(금 시세 등)를 XML로 변환
+
+    Args:
+        data: scraper.scrape() 결과 딕셔너리
+        root_tag: 루트 태그명 (예: "gold")
+
+    Returns:
+        XML 문자열
+        <?xml version="1.0" encoding="UTF-8"?>
+        <gold>
+          <target>krx</target>
+          <label>국내 금 시세 (KRX 금 현물)</label>
+          <price>190990</price>
+          <unit>원/g</unit>
+          <currency>KRW</currency>
+          <timestamp>2026-07-24T01:00:00</timestamp>
+        </gold>
+    """
+    root = ET.Element(root_tag)
+    _append_scrape_fields(root, data)
+    return prettify_xml(root)
+
+
+def build_scrape_list_xml(
+    items: list, root_tag: str = "quotes", item_tag: str = "quote"
+) -> str:
+    """
+    스크래핑 결과 여러 건을 XML로 변환
+
+    Args:
+        items: scraper.scrape() 결과 딕셔너리 리스트
+        root_tag: 루트 태그명 (예: "golds")
+        item_tag: 각 항목 태그명 (예: "gold")
+
+    Returns:
+        XML 문자열
+    """
+    root = ET.Element(root_tag)
+    for data in items:
+        item = ET.SubElement(root, item_tag)
+        _append_scrape_fields(item, data)
+    return prettify_xml(root)
+
+
+def _append_scrape_fields(parent: ET.Element, data: Dict[str, Any]) -> None:
+    """스크래핑 결과 딕셔너리를 XML 하위 요소로 추가 (공통 로직)"""
+    target_elem = ET.SubElement(parent, "target")
+    target_elem.text = str(data.get("target", ""))
+
+    if data.get("label"):
+        label_elem = ET.SubElement(parent, "label")
+        label_elem.text = str(data.get("label"))
+
+    # 구글시트 IMPORTXML 호환을 위해 시세 값의 태그명은 <price>로 통일
+    price_elem = ET.SubElement(parent, "price")
+    price_elem.text = str(data.get("value", ""))
+
+    if data.get("unit"):
+        unit_elem = ET.SubElement(parent, "unit")
+        unit_elem.text = str(data.get("unit"))
+
+    if data.get("currency"):
+        currency_elem = ET.SubElement(parent, "currency")
+        currency_elem.text = str(data.get("currency"))
+
+    timestamp_elem = ET.SubElement(parent, "timestamp")
+    timestamp_elem.text = str(data.get("timestamp", ""))
+
+
 def build_error_xml(
     message: str, code: Optional[int] = None, detail: Optional[str] = None
 ) -> str:

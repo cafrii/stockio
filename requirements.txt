@@ -11,6 +11,10 @@ requests==2.32.3
 # 환경 변수 관리
 python-dotenv==1.0.1
 
+# 스크래핑 (Phase 2.2 - 금 시세 등)
+lxml==6.1.1          # XPath 추출
+PyYAML==6.0.3        # 스크래핑 대상 설정(config/scrape_targets.yaml) 로드
+
 # 캐싱 (Phase 2)
 cachetools==5.5.0
 

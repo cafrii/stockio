@@ -11,7 +11,20 @@ import logging
 from app.services.kiwoom import get_kiwoom_client
 from app.services.base import StockProviderError, ProviderAuthError
 from app.services.provider import get_provider, available_providers, resolve_provider_name
-from app.utils.xml_builder import build_stock_price_xml, build_error_xml
+from app.services import gold as gold_service
+from app.services.scraper import (
+    get_scraper,
+    ScrapeError,
+    ScrapeConfigError,
+    ScrapeFetchError,
+    ScrapeExtractError,
+)
+from app.utils.xml_builder import (
+    build_stock_price_xml,
+    build_error_xml,
+    build_scrape_xml,
+    build_scrape_list_xml,
+)
 
 # 로거 설정
 logger = logging.getLogger(__name__)
@@ -125,6 +138,127 @@ async def force_expire_token():
             "error": str(e),
             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
+
+
+def _scrape_error_response(e: ScrapeError) -> Response:
+    """스크래핑 예외를 XML 에러 응답으로 변환 (공통)"""
+    if isinstance(e, ScrapeConfigError):
+        # 설정에 없는 대상/그룹 → 요청 잘못
+        status_code, message = 400, "스크래핑 설정 오류입니다."
+    elif isinstance(e, ScrapeExtractError):
+        # XPath 미매칭 → 페이지 구조 변경 가능성 (설정 갱신 필요)
+        status_code, message = (
+            502,
+            "값 추출에 실패했습니다. 페이지 구조가 변경되었을 수 있습니다. "
+            "config/scrape_targets.yaml의 xpath를 확인하세요.",
+        )
+    elif isinstance(e, ScrapeFetchError):
+        status_code, message = 502, "대상 페이지 조회에 실패했습니다."
+    else:
+        status_code, message = 502, "스크래핑에 실패했습니다."
+
+    error_xml = build_error_xml(message=message, code=status_code, detail=str(e))
+    return Response(content=error_xml, media_type="application/xml", status_code=status_code)
+
+
+@router.get("/api/gold")
+async def get_gold_price(
+    target: str = Query(
+        None,
+        description="금 시세 대상 (krx, international). 미지정 시 전체 반환",
+    ),
+):
+    """
+    금 시세 조회 엔드포인트 (스크래핑 기반)
+
+    대상 URL·XPath는 `config/scrape_targets.yaml`의 `groups.gold`에 정의되어 있으며
+    코드에 하드코딩되지 않는다. 페이지 변경 시 설정만 갱신하면 된다.
+
+    Args:
+        target: 대상 키. 미지정 시 정의된 모든 대상을 반환
+
+    Returns:
+        XML 응답
+        <?xml version="1.0" encoding="UTF-8"?>
+        <gold>
+          <target>krx</target>
+          <label>국내 금 시세 (KRX 금 현물)</label>
+          <price>190990</price>
+          <unit>원/g</unit>
+          <currency>KRW</currency>
+          <timestamp>2026-07-24T01:00:00</timestamp>
+        </gold>
+    """
+    try:
+        # target 미지정 → 전체 조회 (동일 URL은 캐시로 1회만 요청)
+        if not target:
+            items = await gold_service.get_all_gold_prices()
+            xml_content = build_scrape_list_xml(items, root_tag="golds", item_tag="gold")
+            logger.info(f"금 시세 전체 조회 성공: {len(items)}건")
+            return Response(content=xml_content, media_type="application/xml")
+
+        data = await gold_service.get_gold_price(target.strip().lower())
+        xml_content = build_scrape_xml(data, root_tag="gold")
+        logger.info(f"금 시세 조회 성공: {data['target']} = {data['value']}")
+        return Response(content=xml_content, media_type="application/xml")
+
+    except ScrapeError as e:
+        logger.error(f"금 시세 조회 실패: {e}")
+        return _scrape_error_response(e)
+
+    except Exception as e:
+        logger.exception(f"금 시세 조회 중 예상치 못한 에러: {e}")
+        error_xml = build_error_xml(
+            message="서버 내부 오류가 발생했습니다.", code=500, detail=str(e)
+        )
+        return Response(content=error_xml, media_type="application/xml", status_code=500)
+
+
+@router.get("/api/scrape")
+async def scrape_target(
+    group: str = Query(..., description="자산 그룹 (예: gold, crypto)"),
+    target: str = Query(None, description="대상 키. 미지정 시 그룹 전체 반환"),
+):
+    """
+    범용 스크래핑 엔드포인트
+
+    설정 파일에 그룹/대상을 추가하기만 하면 코드 변경 없이 조회할 수 있다.
+    (예: 가상자산 시세 등 증권사 API가 제공하지 않는 정보)
+
+    Args:
+        group: 자산 그룹 (설정의 `groups` 키)
+        target: 대상 키. 미지정 시 그룹 내 전체
+
+    Returns:
+        XML 응답
+    """
+    try:
+        scraper = get_scraper()
+        group_key = group.strip().lower()
+
+        if not target:
+            items = await scraper.scrape_group(group_key)
+            if not items:
+                raise ScrapeConfigError(f"'{group_key}' 그룹에 정의된 대상이 없습니다.")
+            xml_content = build_scrape_list_xml(items, root_tag="quotes", item_tag="quote")
+            logger.info(f"스크래핑 그룹 조회 성공: {group_key} {len(items)}건")
+            return Response(content=xml_content, media_type="application/xml")
+
+        data = await scraper.scrape(group_key, target.strip().lower())
+        xml_content = build_scrape_xml(data, root_tag="quote")
+        logger.info(f"스크래핑 조회 성공: {group_key}.{data['target']} = {data['value']}")
+        return Response(content=xml_content, media_type="application/xml")
+
+    except ScrapeError as e:
+        logger.error(f"스크래핑 실패: {e}")
+        return _scrape_error_response(e)
+
+    except Exception as e:
+        logger.exception(f"스크래핑 중 예상치 못한 에러: {e}")
+        error_xml = build_error_xml(
+            message="서버 내부 오류가 발생했습니다.", code=500, detail=str(e)
+        )
+        return Response(content=error_xml, media_type="application/xml", status_code=500)
 
 
 @router.get("/api/price")

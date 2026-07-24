@@ -31,6 +31,14 @@ class Config:
     # 하드코딩 대신 환경 변수로 변경 가능 → 백엔드 설정 한 번으로 전체 교체.
     DEFAULT_PROVIDER: str = os.getenv("DEFAULT_PROVIDER", "kiwoom").lower()
 
+    # 스크래핑 설정
+    # 대상 URL·XPath는 코드가 아닌 이 설정 파일에 외부화한다.
+    # 파일 위치 자체도 환경 변수로 변경 가능.
+    SCRAPE_CONFIG_PATH: str = os.getenv(
+        "SCRAPE_CONFIG_PATH",
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "config", "scrape_targets.yaml"),
+    )
+
     # 애플리케이션 설정
     APP_NAME: str = "Stockio"
     APP_VERSION: str = "1.0.0"

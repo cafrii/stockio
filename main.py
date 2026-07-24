@@ -94,6 +94,8 @@ async def root():
         "endpoints": {
             "health": "/health",
             "price": "/api/price?code={종목코드}&market={시장구분}&provider={kiwoom|toss}",
+            "gold": "/api/gold?target={krx|international}",
+            "scrape": "/api/scrape?group={그룹}&target={대상}",
             "docs": "/docs",
         },
     }
