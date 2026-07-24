@@ -89,16 +89,16 @@
 > - 진행 상태: `docs/phase2/status.md`
 
 ### Phase 2.1: 증권사 API 이중화 (토스증권 추가)
-- [ ] 증권사 공통 인터페이스 추상화 (`StockProvider`)
-- [ ] 토스증권 클라이언트 구현 (`app/services/toss.py`)
-- [ ] `/api/price`에 `provider` 파라미터 추가 (kiwoom | toss, 기본 kiwoom)
+- [✓] 증권사 공통 인터페이스 추상화 (`StockProvider`)
+- [✓] 토스증권 클라이언트 구현 (`app/services/toss.py`)
+- [✓] `/api/price`에 `provider` 파라미터 추가 (kiwoom | toss, 기본 kiwoom)
 
 **산출물**: 이중화된 provider 코드, provider 선택 API
 
 ### Phase 2.2: 금 시세 정보 (스크래핑)
-- [ ] KRX 금 시세 / 국제 금 시세(원·달러) 제공
-- [ ] URL·XPath 외부 설정화 (하드코딩 금지)
-- [ ] 페이지/셀렉터 변경 시 조치 가이드 문서화
+- [✓] KRX 금 시세 / 국제 금 시세(원·달러) 제공
+- [✓] URL·XPath 외부 설정화 (하드코딩 금지)
+- [✓] 페이지/셀렉터 변경 시 조치 가이드 문서화
 
 **산출물**: 금 시세 엔드포인트, 스크래핑 설정 파일, 변경 대응 가이드
 
