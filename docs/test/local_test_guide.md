@@ -1,6 +1,8 @@
-# Stockio 테스트 가이드
+# Stockio 로컬 테스트 가이드
 
-본 문서는 Stockio 서비스의 로컬 테스트 방법을 설명합니다.
+로컬에서 Stockio를 실행하고 API를 시험하는 방법. (마스터 문서: [`docs/README.md`](../README.md))
+
+> 갱신: 2026-07-24 — Phase 2 반영(provider·금·스크래핑·렌더링). 이전 Phase 1.1 시절 내용은 대체됨.
 
 ---
 
@@ -16,162 +18,119 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 1.3 환경 변수 확인
-`.env` 파일에 다음 항목이 설정되어 있는지 확인:
+### 1.3 headless 렌더링 (선택)
+가상자산 등 **lazy 로딩 대상**을 로컬에서 시험하려면 playwright가 필요하다.
+설치하지 않아도 주식·금 시세·정적 스크래핑은 정상 동작한다.
+```bash
+pip install playwright && playwright install chromium
 ```
+
+### 1.4 환경 변수 (`.env`)
+```ini
+# 키움
 KIWOOM_API_APPKEY=...
 KIWOOM_API_SECRET=...
-KIWOOM_API_HOST=https://openapi.kiwoom.com
+KIWOOM_API_HOST=https://api.kiwoom.com          # 모의투자: https://mockapi.kiwoom.com
 KIWOOM_TOKEN_ENV=/tmp/.kiwoom_env
+# 토스 (provider 이중화)
+TOSS_API_CLIENT_ID=...
+TOSS_API_SECRET=...
+TOSS_API_HOST=https://openapi.tossinvest.com
+TOSS_TOKEN_ENV=/tmp/.toss_env
+# provider 미지정 시 기본값 (kiwoom | toss)
+DEFAULT_PROVIDER=kiwoom
+# 기타
+DEBUG=false
 ```
+
+> 키움·토스 모두 **호출 서버의 IP가 허용목록에 등록**돼 있어야 한다(미등록 시 403).
 
 ---
 
 ## 2. 서버 실행
 
-### 2.1 로컬 서버 시작
 ```bash
-python main.py
+uvicorn main:app --reload      # 또는  python main.py
 ```
 
-또는
-
-```bash
-uvicorn main:app --reload
+정상 기동 로그 예:
+```
+INFO  Stockio v1.0.0 시작
+INFO  키움 API 호스트: https://api.kiwoom.com
+INFO  기본 provider: kiwoom
+INFO  환경 변수 검증 완료
+INFO  Uvicorn running on http://0.0.0.0:8000
 ```
 
-서버가 성공적으로 시작되면 다음과 같은 로그가 출력됩니다:
-```
-INFO:     Stockio v1.0.0 시작
-INFO:     디버그 모드: False
-INFO:     키움 API 호스트: https://openapi.kiwoom.com
-INFO:     환경 변수 검증 완료
-INFO:     Uvicorn running on http://0.0.0.0:8000
-```
-
-### 2.2 서버 확인
-브라우저에서 다음 URL에 접속:
-- http://localhost:8000/ - 서비스 정보
-- http://localhost:8000/docs - Swagger UI (API 문서)
-- http://localhost:8000/health - 헬스 체크
+확인용 URL: `/` (서비스 정보) · `/docs` (Swagger) · `/health`
 
 ---
 
 ## 3. API 테스트
 
-### 3.1 Health Check
+### 3.1 헬스 체크
 ```bash
 curl http://localhost:8000/health
+# {"status":"healthy","timestamp":"...","service":"Stockio"}
 ```
 
-**예상 응답:**
-```json
-{
-  "status": "healthy",
-  "timestamp": "2025-12-22T23:32:20",
-  "service": "Stockio"
-}
-```
-
-### 3.2 루트 엔드포인트
+### 3.2 주식 시세 (provider 이중화 + 52주)
 ```bash
-curl http://localhost:8000/
+curl "http://localhost:8000/api/price?code=005930"                 # 기본 provider
+curl "http://localhost:8000/api/price?code=005930&provider=kiwoom"
+curl "http://localhost:8000/api/price?code=005930&provider=toss"
 ```
-
-**예상 응답:**
-```json
-{
-  "service": "Stockio",
-  "version": "1.0.0",
-  "status": "running",
-  "endpoints": {
-    "health": "/health",
-    "price": "/api/price?code={종목코드}&market={시장구분}",
-    "docs": "/docs"
-  }
-}
-```
-
-### 3.3 시세 조회
-```bash
-curl "http://localhost:8000/api/price?code=005930&market=KOSPI"
-```
-
-**현재 상태:**
-- ❌ 키움 API 엔드포인트 URL이 정확하지 않아 404 에러 발생
-- 🔧 Phase 1.2 단위 시험에서 수정 예정
-
-**예상 응답 (정상):**
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
 <stock>
   <code>005930</code>
-  <price>71000</price>
-  <timestamp>2025-12-22T14:30:00</timestamp>
+  <price>249000</price>
+  <high52w>374500</high52w>
+  <low52w>62000</low52w>
+  <high52w_date>20260619</high52w_date>
+  <timestamp>2026-07-24T02:50:01</timestamp>
   <market>KOSPI</market>
+  <provider>kiwoom</provider>
 </stock>
 ```
 
-**예상 응답 (에러):**
+### 3.3 금 시세 (스크래핑, 정적)
+```bash
+curl "http://localhost:8000/api/gold?target=krx"
+curl "http://localhost:8000/api/gold?target=international"
+curl "http://localhost:8000/api/gold"                 # 전체
+curl "http://localhost:8000/api/gold?target=krx&refresh=1"   # 캐시 무시(개발용)
+```
+
+### 3.4 범용 스크래핑 (렌더링 대상 포함)
+```bash
+curl "http://localhost:8000/api/scrape?group=crypto&target=btc"   # playwright 필요
+```
+
+응답의 `<method>`로 정적(`static`)/렌더링(`render`) 경로를 구분할 수 있다.
+
+### 3.5 에러 응답 예
 ```xml
-<?xml version="1.0" encoding="UTF-8"?>
 <error>
   <message>시세 조회에 실패했습니다.</message>
   <code>502</code>
   <detail>...</detail>
 </error>
 ```
+에러 코드 의미와 대응은 [`docs/troubleshooting.md`](../troubleshooting.md) 참고.
 
 ---
 
-## 4. Phase 1.1 테스트 결과 (2025-12-22)
+## 4. 단위 테스트
 
-### 4.1 성공한 항목 ✅
-- [x] 서버 시작 및 환경 변수 로드
-- [x] Health check 엔드포인트 동작
-- [x] 루트 엔드포인트 동작
-- [x] 에러 처리 및 XML 응답 생성
-- [x] CORS 설정
-
-### 4.2 수정 필요 항목 🔧
-- [ ] 키움 API 엔드포인트 URL 확인 및 수정
-  - 현재: `/uapi/domestic-stock/v1/quotations/inquire-price` (404 에러)
-  - 키움 API 문서 확인 필요
-- [ ] 시세 조회 파라미터 확인
-  - `fid_cond_mrkt_div_code`, `fid_input_iscd` 등
-- [ ] 응답 데이터 파싱 로직 확인
-  - `output.stck_prpr` 등의 필드명 확인
-
----
-
-## 5. 다음 단계 (Phase 1.2: 단위 시험)
-
-1. **키움 API 문서 확인**
-   - 현재가 조회 API의 정확한 엔드포인트 및 파라미터 확인
-   - 응답 데이터 구조 확인
-
-2. **단위 테스트 작성**
-   - `tests/test_kiwoom.py` - 키움 API 클라이언트 테스트
-   - `tests/test_api.py` - API 엔드포인트 테스트
-
-3. **실제 시세 조회 테스트**
-   - 키움 API 문서를 참고하여 `app/services/kiwoom.py` 수정
-   - 실제 종목 코드로 시세 조회 동작 확인
-
----
-
-## 6. Google Spreadsheet 연동 (Phase 1.3에서 진행)
-
-키움 API 연동이 완료되면 Google Spreadsheet에서 다음과 같이 사용:
-
+```bash
+pytest -q
 ```
-=IMPORTXML("http://localhost:8000/api/price?code=005930&market=KOSPI", "//price")
-```
+- `tests/` 아래 키움/라우트 테스트. (참고 결과: `docs/test/phase1_2_test_results.md`, `phase1_3_test_results.md`)
 
 ---
 
-## 참고
-
+## 5. 참고
+- API 명세 전체: [`docs/README.md`](../README.md)
+- 스크래핑 대상 추가/변경: [`docs/phase2/gold_scraping_guide.md`](../phase2/gold_scraping_guide.md)
 - Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-- 로그 레벨 변경: `.env` 파일에 `DEBUG=true` 추가
+- 로그 상세: `.env`에 `DEBUG=true`

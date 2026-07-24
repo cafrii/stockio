@@ -180,7 +180,7 @@ curl "http://localhost:8000/api/gold?target=international"
 curl "http://localhost:8000/api/gold"
 
 # 운영 서버(gamma)
-curl "https://fiji.lowasis.com:8100/api/gold?target=krx"
+curl "https://<myserver.com>:8100/api/gold?target=krx"
 ```
 
 정상 응답:
@@ -240,8 +240,8 @@ curl "http://localhost:8000/api/scrape?group=crypto"          # 그룹 전체
 ## 6. 구글 시트에서 쓰기
 
 ```
-=IMPORTXML("https://fiji.lowasis.com:8100/api/gold?target=krx", "//price")
-=IMPORTXML("https://fiji.lowasis.com:8100/api/gold?target=international", "//price")
+=IMPORTXML("https://<myserver.com>:8100/api/gold?target=krx", "//price")
+=IMPORTXML("https://<myserver.com>:8100/api/gold?target=international", "//price")
 ```
 
 시세 값의 태그명은 대상과 무관하게 **`<price>` 로 통일**되어 있어 수식이 단순하다.

@@ -127,7 +127,7 @@
 - [x] 롤백 태그 `stockio:rollback-20260724` 생성 후 컨테이너 교체
 - [x] 전송 파일 정리, 컨테이너 `healthy`, 에러 로그 0건
 
-**토스 IP**: gamma 아웃바운드 IP는 `218.153.133.205`(로컬 `49.1.157.205`와 다름)이나,
+**토스 IP**: gamma 아웃바운드 IP는 `218.153.133.xx`(로컬 `49.1.157.xx`와 다름)이나,
 **이미 허용되어 있어 추가 등록 없이 정상 동작**했다.
 
 ### 배포 검증 결과 (gamma, 2026-07-24)
@@ -141,7 +141,7 @@
 | `/api/gold?target=krx` | ✅ 189,540 원/g `static` |
 | `/api/gold?target=international` | ✅ 4,043.9 USD/OZS `static` |
 | `/api/scrape?group=crypto&target=btc` | ✅ **94,693,000원 `render`** (컨테이너 내 chromium 동작) |
-| 외부 경로 `https://fiji.lowasis.com:8100` | ✅ 정상 (구글시트 사용 경로) |
+| 외부 경로 `https://<myserver.com>:8100` | ✅ 정상 (구글시트 사용 경로) |
 | 볼륨 토큰 파일 | ✅ `.kiwoom_env`, `.toss_env` 생성 |
 
 ---
