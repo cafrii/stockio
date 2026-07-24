@@ -1,6 +1,6 @@
 # Phase 2 진행 상황
 
-**최종 업데이트**: 2026-07-24 (Phase 2.1 / 2.2 모두 구현·실측 완료)
+**최종 업데이트**: 2026-07-24 (Phase 2 구현 완료 + **gamma 서버 배포 완료**)
 
 > 상위 진행 상황은 `docs/status.md`, Phase 2 상세 계획은 `docs/phase2/milestone.md` 참고.
 > 갑작스러운 중단 후 심리스 재개를 위한 상태 문서. 단계(milestone) 완료 시 갱신한다.
@@ -9,7 +9,7 @@
 
 ## 현재 단계
 
-**Phase 2 전체(2.1 API 이중화 + 2.2 금 시세) 구현·실측 완료 ✅ → 다음: gamma 서버 재배포**
+**Phase 2 전체 완료 + gamma 배포 완료 ✅ → 다음: 구글시트 수식 반영 / Phase 3(안정화)**
 
 ### 토스 API 조사 결과 (중요)
 - 토스 `/api/v1/prices`는 **현재가(lastPrice)만 제공, 52주 최고/최저가 필드 없음**.
@@ -114,12 +114,45 @@
 
 ---
 
+## gamma 배포 (2026-07-24)
+
+- [x] `.dockerignore` 신규 작성 — **기존에 `.env`(시크릿)와 `.venv`(198MB)가 이미지에 포함되던 문제 수정**
+  (빌드 컨텍스트 250MB+ → 51.75MB)
+- [x] gamma `~/stockio/.env` 에 토스 4개 변수 추가 (`TOSS_TOKEN_ENV=/data/.toss_env`, 볼륨 저장)
+  - 기존 파일은 `~/stockio/.env.bak.20260724` 로 백업
+- [x] 이미지 빌드: `--platform linux/amd64 --build-arg ENABLE_RENDER=true` → **1372MB** (chromium 포함)
+- [x] 배포 전 로컬 컨테이너 스모크 테스트 — **비루트(appuser)로 chromium 렌더링 정상 동작 확인**
+- [x] 압축 전송 (553MB)
+
+- [x] 롤백 태그 `stockio:rollback-20260724` 생성 후 컨테이너 교체
+- [x] 전송 파일 정리, 컨테이너 `healthy`, 에러 로그 0건
+
+**토스 IP**: gamma 아웃바운드 IP는 `218.153.133.205`(로컬 `49.1.157.205`와 다름)이나,
+**이미 허용되어 있어 추가 등록 없이 정상 동작**했다.
+
+### 배포 검증 결과 (gamma, 2026-07-24)
+
+| 항목 | 결과 |
+|------|------|
+| `/health` | ✅ healthy |
+| `/api/price` (kiwoom) | ✅ 249,000 / high52w 374,500 / **low52w 62,000** |
+| `/api/price?provider=toss` | ✅ **정상** / high52w 380,000 / low52w 63,100 (캔들 산출) |
+| 두 provider `high52w_date` | ✅ **20260619 일치** |
+| `/api/gold?target=krx` | ✅ 189,540 원/g `static` |
+| `/api/gold?target=international` | ✅ 4,043.9 USD/OZS `static` |
+| `/api/scrape?group=crypto&target=btc` | ✅ **94,693,000원 `render`** (컨테이너 내 chromium 동작) |
+| 외부 경로 `https://fiji.lowasis.com:8100` | ✅ 정상 (구글시트 사용 경로) |
+| 볼륨 토큰 파일 | ✅ `.kiwoom_env`, `.toss_env` 생성 |
+
+---
+
 ## 블로커 / 대기 항목
 - ~~토스 API 키·시크릿~~ → **검증 완료** (2026-07-23 실측 성공, 005930)
 - ~~금 시세 대상 URL·XPath~~ → **제공 완료** (naver metals 페이지 + XPath 2종)
 - ~~금 시세 lazy 로딩/headless 여부~~ → **확정: SSR이라 headless 불필요**(단순 HTTP GET으로 추출)
 - ~~토스 52주 최고/최저가~~ → **완료**(일봉 캔들 250일 산출, kiwoom과 교차검증 일치)
-- gamma 재배포 시: 토스 4개 환경변수 + 서버 IP 토스 허용목록 등록 + `lxml`/`PyYAML` 포함 이미지 재빌드
+- ~~gamma 재배포~~ → **완료 (2026-07-24)**. 토스 환경변수·렌더링 포함 이미지 반영, 전 항목 검증 통과.
+- (남은 것) 구글시트에 금 시세·BTC 수식 반영은 사용자 작업
 
 ---
 
