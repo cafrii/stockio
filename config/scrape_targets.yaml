@@ -85,12 +85,12 @@ groups:
       render: always
 
     eth:
-      label: "이더리움 (빗썸2)"
+      label: "이더리움 (빗썸4)"
       url: "https://m.stock.naver.com/crypto/BITHUMB/ETH/total"
       # xpath1: "//div[contains(@class, 'MajorInfoList_price_')]"
       # xpath2: '//*[@id="content"]/div[1]/div[1]/div/div[2]/text()'
       # <div class="DetailInfo_price___Nog_">2,742,000<span class="DetailInfo_unit__YSPlU">원</span></div>
-      xpath: '//div[contains(@class, "DetailInfo_price_")]/text()'
+      xpath: '//div[contains(@class, "DetailInfo_price_")]/text()[1]'
       unit: "원"
       currency: "KRW"
       render: always

@@ -148,6 +148,8 @@ curl "https://<myserver.com>:8100/api/scrape?group=crypto&target=btc"
 - 요점:
   - `--platform linux/amd64` 필수(gamma는 x86_64). 렌더링 포함은 `--build-arg ENABLE_RENDER=true`.
   - 토큰은 named volume `stockio-data`(`/data`)에 보존 → 컨테이너 재생성해도 유지.
+  - **`config/scrape_targets.yaml`은 호스트에서 관리**(읽기전용 마운트) → 스크래핑 설정만 바뀌면
+    **이미지 재빌드 없이** `scp` 한 번 + 자동 재로드로 반영. (코드 변경 시에만 재빌드)
   - 서비스 포트 8100, 외부는 Synology 역방향 프록시로 `https://<myserver.com>:8100`.
 
 ---

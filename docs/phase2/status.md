@@ -152,6 +152,10 @@
 - ~~금 시세 lazy 로딩/headless 여부~~ → **확정: SSR이라 headless 불필요**(단순 HTTP GET으로 추출)
 - ~~토스 52주 최고/최저가~~ → **완료**(일봉 캔들 250일 산출, kiwoom과 교차검증 일치)
 - ~~gamma 재배포~~ → **완료 (2026-07-24)**. 토스 환경변수·렌더링 포함 이미지 반영, 전 항목 검증 통과.
+- **config 호스트 관리 전환 (2026-07-24)**: `config/scrape_targets.yaml`을 호스트에 두고
+  `-v ~/stockio/config:/app/config:ro` 읽기전용 마운트. → 스크래핑 설정 변경 시 **이미지 재빌드 불필요**,
+  `scp` + mtime 자동 재로드로 즉시 반영. gamma에서 핫리로드 실측 확인.
+- 마스터 문서 `docs/README.md` + `docs/troubleshooting.md` 작성, `docs/test/local_test_guide.md` 최신화.
 - (남은 것) 구글시트에 금 시세·BTC 수식 반영은 사용자 작업
 
 ---

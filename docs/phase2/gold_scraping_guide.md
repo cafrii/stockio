@@ -13,6 +13,10 @@
 - 이 파일을 고치면 **서버 재시작 없이 즉시 반영**된다.
   (파일 수정 시각(mtime)을 감지해 자동 재로드)
 - 따라서 장애 대응은 대부분 **YAML 한 줄 수정**으로 끝난다.
+- **운영(gamma)에서는 이 파일이 호스트에 있고 컨테이너에 읽기전용 마운트**된다
+  (`-v ~/stockio/config:/app/config:ro`). 즉 **이미지 재빌드가 전혀 필요 없다.**
+  - 갱신 절차: 리포지토리에서 수정 → 개발 환경에서 검증 → `scp config/scrape_targets.yaml gamma:~/stockio/config/` → 끝.
+  - 배포 가이드: [`.ai/docs/gamma_docker_guide.md`](../../.ai/docs/gamma_docker_guide.md) "스크래핑 설정만 변경할 때"
 
 ---
 
